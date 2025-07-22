@@ -2,9 +2,10 @@
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <random>
+#include <set>
 
 #define d_t 0.1
-#define fishCount 500
+#define fishCount 200
 
 #define sigma 0.2
 #define alpha 0.05
@@ -16,8 +17,10 @@
 #define max_dv 1.5 * d_t
 #define max_v 0.6
 #define min_v 0.03
-#define tank_size 10
-
+#define tank_size 15
+#define cell_count 10
+#define cell_width tank_size / cell_count
+#define vision grid_size
 #define dimensions 3
 
 std::default_random_engine generator;
@@ -55,8 +58,8 @@ class Fish {
             v[i] = (rand() % 10 - 5) / 5.0f; 
         }
     }
-    sf::Uint8 color_alpha() {
-        return x[2]*10;
+    sf::Uint8 color() {
+        return 240-x[2]*10;
     }
     void avoidTank(float dv[dimensions]) {
         for (int dimension = 0; dimension<dimensions; dimension ++) {
@@ -112,42 +115,77 @@ class Fish {
             x[dimension] += dx*d_t;
         }
     }
-
+    void assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
+        cells[static_cast<int>(x[0] / cell_width)][static_cast<int>(x[1] / cell_width)][static_cast<int>(x[2] / cell_width)].push_back(this);
+    }
 };
 
+void check_other_fish(Fish* fish, std::set<Fish*> fishes, float dv[dimensions]) {
+    for (Fish* other_fish: fishes) {
+        if (other_fish != fish) {
+            float abs_distance = get_abs_difference(other_fish->x, fish->x);
+            float scalar_s = std::pow(r,p)/std::pow(abs_distance,p) - std::pow(r,q)/std::pow(abs_distance,q);
+            float scalar_v = std::pow(r,p)/std::pow(abs_distance,p) + std::pow(r,q)/std::pow(abs_distance,q);
+            float v_vec[dimensions];
+            float s_vec[dimensions];
+            get_vector_difference(fish->v, other_fish->v, v_vec);
+            get_vector_difference(fish->x, other_fish->x, s_vec);
+            for (int dimension = 0; dimension<dimensions; dimension++) {
+                dv[dimension] += scalar_s * alpha * s_vec[dimension] - scalar_v * beta * v_vec[dimension];
+            }
+        }
+    }
+}
+
 sf::CircleShape drawFish(Fish fish) {
-    sf::CircleShape circle(2.f);
-    circle.setFillColor(sf::Color{0, 150, 255, fish.color_alpha()});
-    circle.setPosition(fish.x[0]*80, fish.x[1]*80);
+    sf::CircleShape circle(4.f);
+    circle.setFillColor(sf::Color{0, fish.color(), 255});
+    circle.setPosition(fish.x[0]*60, fish.x[1]*60);
     return circle;
 }
 
-
-int main()
-{
+std::vector<Fish*> all_fish[cell_count][cell_count][cell_count];
+Fish fish_lst[fishCount];
+int main() {
+    for (int i = 0; i<fishCount; i++) {
+        fish_lst[i].assign_cell(all_fish);
+    }
     sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    Fish fishes[fishCount];
-    for (int t = 0; t<100000; t++) {
+    for (int t = 0; t<36000; t++) {
         window.clear(sf::Color::White);
-        for (int i = 0; i<fishCount; i ++) {
-            float dv[dimensions] = {0,0,0};
-            for (int j = 0; j < fishCount; j++) {
-                if (j != i) {
-                    float abs_distance = get_abs_difference(fishes[j].x, fishes[i].x);
-                    float scalar_s = std::pow(r,p)/std::pow(abs_distance,p) - std::pow(r,q)/std::pow(abs_distance,q);
-                    float scalar_v = std::pow(r,p)/std::pow(abs_distance,p) + std::pow(r,q)/std::pow(abs_distance,q);
-                    float v_vec[dimensions];
-                    float s_vec[dimensions];
-                    get_vector_difference(fishes[i].v, fishes[j].v, v_vec);
-                    get_vector_difference(fishes[i].x, fishes[j].x, s_vec);
-                    for (int dimension = 0; dimension<dimensions; dimension++) {
-                        dv[dimension] += scalar_s * alpha * s_vec[dimension] - scalar_v * beta * v_vec[dimension];
+        for (int i = 0; i<cell_count; i++) {
+            for (int j = 0; j < cell_count; j++) {
+                for (int k = 0; k< cell_count; k++) {
+                    std::set<Fish*> fish_nearby;
+                    for (int ci = i-1; ci <= i+1; ci++) {
+                        if (0 <= ci && ci < cell_count) {
+                            for (int cj = j-1; cj <= j+1; cj++) {
+                                if (0 <= cj && cj < cell_count) {
+                                    for (int ck = k-1; ck <= k+1; ck++) {
+                                        if (0 <= ck && ck < cell_count) {
+                                            fish_nearby.insert(all_fish[ci][cj][ck].begin(), all_fish[ci][cj][ck].end());
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    std::vector<Fish*> current_fishes = all_fish[i][j][k];
+                    for (Fish* fish : current_fishes) {
+                        float dv[dimensions] = {0, 0, 0};
+                        check_other_fish(fish, fish_nearby, dv);
+                        fish->avoidTank(dv);
+                        fish->normalise_and_move(dv);
+                        window.draw(drawFish(*fish));
+                        if (static_cast<int>(fish->x[0] / cell_width) != i ||
+                            static_cast<int>(fish->x[1] / cell_width) != j ||
+                            static_cast<int>(fish->x[2] / cell_width) != k) {
+                            all_fish[i][j][k].erase(std::find(all_fish[i][j][k].begin(), all_fish[i][j][k].end(), fish));
+                            fish->assign_cell(all_fish);
+                        }
                     }
                 }
             }
-            fishes[i].avoidTank(dv);
-            fishes[i].normalise_and_move(dv);
-            window.draw(drawFish(fishes[i]));
         }
         window.display();
     }
