@@ -4,7 +4,7 @@
 #include <random>
 
 #define d_t 0.1
-#define fishCount 100
+#define fishCount 500
 
 #define sigma 0.2
 #define alpha 0.05
@@ -16,9 +16,9 @@
 #define max_dv 1.5 * d_t
 #define max_v 0.6
 #define min_v 0.03
-#define tank_size 20
+#define tank_size 10
 
-#define dimensions 2
+#define dimensions 3
 
 std::default_random_engine generator;
 std::normal_distribution<double> distribution(0, sqrt(d_t));
@@ -30,13 +30,13 @@ class Fish {
     int uid;
     Fish () { 
         for (int i = 0; i<dimensions; i++) {
-            x[i] = (rand()%800)/40.0f;
+            x[i] = (rand()%800)/80.0f;
             v[i] = (rand() % 10 - 5) / 5.0f; 
         }
         uid = rand()%1000;
     }
     sf::Uint8 color_alpha() {
-        return 255;
+        return x[2]*10;
     }
 };
 
@@ -72,7 +72,7 @@ int main()
 
 
         for (int i = 0; i<fishCount; i ++) {
-            float dv[2] = {0,0};
+            float dv[dimensions] = {0,0,0};
             for (int j = 0; j < fishCount; j++) {
                 if (j != i) {
                     float abs_distance = get_abs_difference(fishes[j].x, fishes[i].x);
@@ -87,7 +87,7 @@ int main()
                     }
                 }
             }
-            float collision_avoidance[dimensions] = {0,0};
+            float collision_avoidance[dimensions] = {0,0,0};
             for (int dimension = 0; dimension<dimensions; dimension ++) {
                 float reflection_vector[dimensions];
                 for (int d = 0; d < dimensions; d++) {
@@ -147,7 +147,7 @@ int main()
 
             sf::CircleShape circle(2.f);
             circle.setFillColor(sf::Color{0, 150, 255, fishes[i].color_alpha()});
-            circle.setPosition(fishes[i].x[0]*40, fishes[i].x[1]*40);
+            circle.setPosition(fishes[i].x[0]*80, fishes[i].x[1]*80);
             window.draw(circle);
         }
         window.display();
