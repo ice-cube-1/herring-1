@@ -4,17 +4,19 @@
 #include <random>
 
 #define d_t 0.1
-#define fishCount 10
+#define fishCount 100
 
-#define sigma 0.1
+#define sigma 0.2
 #define alpha 0.05
 #define beta 0.1
+#define gamma 0.5
 #define r 0.9  
 #define p 2.5    
 #define q 1.5       
 #define max_dv 1.5 * d_t
 #define max_v 0.6
 #define min_v 0.03
+#define tank_size 20
 
 #define dimensions 2
 
@@ -28,7 +30,7 @@ class Fish {
     int uid;
     Fish () { 
         for (int i = 0; i<dimensions; i++) {
-            x[i] = (rand()%400 + 200)/40.0f;
+            x[i] = (rand()%800)/40.0f;
             v[i] = (rand() % 10 - 5) / 5.0f; 
         }
         uid = rand()%1000;
@@ -85,6 +87,35 @@ int main()
                     }
                 }
             }
+            float collision_avoidance[dimensions] = {0,0};
+            for (int dimension = 0; dimension<dimensions; dimension ++) {
+                float reflection_vector[dimensions];
+                for (int d = 0; d < dimensions; d++) {
+                    if (d == dimension) {
+                        reflection_vector[d] = -fishes[i].v[d];
+                    }
+                    else {
+                        reflection_vector[d] = fishes[i].v[d];
+                    }
+                }
+                float reflection_pos[dimensions];
+                if (fishes[i].v[dimension] < 0) {
+                    reflection_pos[dimension] = 0;
+                } else {
+                    reflection_pos[dimension] = tank_size;
+                }
+                for (int other_d = 0; other_d < dimensions; other_d ++) {
+                    if (other_d != dimension) {
+                        reflection_pos[other_d] = (fishes[i].x[dimension] * fishes[i].v[other_d])/(reflection_pos[dimension] - fishes[i].v[dimension]) + fishes[i].x[other_d];
+                    }
+                }
+                float abs_distance = get_abs_difference(reflection_pos, fishes[i].x);
+                float scalar_collision = std::pow(r,p)/std::pow(abs_distance,p) + std::pow(r,q)/std::pow(abs_distance,q);
+                for (int d = 0; d < dimensions; d++) {
+                    dv[d] -= gamma * scalar_collision * (fishes[i].v[d] - reflection_vector[d]);
+                }
+            }
+
             float abs_dv = vector_abs(dv);
             if (abs_dv > max_dv) {
                 float scale_factor = max_dv / abs_dv;
@@ -111,11 +142,10 @@ int main()
             for (int dimension = 0; dimension<dimensions; dimension++) {
                 float dx = distribution(generator)*sigma + fishes[i].v[dimension];
                 fishes[i].x[dimension] += dx*d_t;
-                std::cout << fishes[i].v[dimension] << dv[dimension] * d_t << "\n";
             }
 
 
-            sf::CircleShape circle(1.f);
+            sf::CircleShape circle(2.f);
             circle.setFillColor(sf::Color{0, 150, 255, fishes[i].color_alpha()});
             circle.setPosition(fishes[i].x[0]*40, fishes[i].x[1]*40);
             window.draw(circle);
