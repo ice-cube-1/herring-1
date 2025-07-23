@@ -1,0 +1,30 @@
+#include <cmath>
+#include "vec3.h"
+
+Vec3::Vec3() : arr{0, 0, 0} {}
+
+Vec3::Vec3(float xVal, float yVal, float zVal) : arr{xVal, yVal, zVal} {}
+
+float Vec3::x() const { return arr[0]; }
+float Vec3::y() const { return arr[1]; }
+float Vec3::z() const { return arr[2]; }
+
+Vec3 Vec3::operator+(const Vec3& other) const {
+    return Vec3(x() + other.x(), y() + other.y(), z() + other.z());
+}
+
+Vec3 Vec3::operator-(const Vec3& other) const {
+    return Vec3(x() - other.x(), y() - other.y(), z() - other.z());
+}
+
+Vec3 Vec3::operator*(float scalar) const {
+    return Vec3(x() * scalar, y() * scalar, z() * scalar);
+}
+
+float Vec3::abs() {
+    return std::sqrt(x()*x() + y()*y() + z()*z());
+}
+
+float Vec3::dot_product(const Vec3& other) const {
+    return x() * other.x() + y() * other.y() + z() * other.z();
+}

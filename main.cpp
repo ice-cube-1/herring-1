@@ -2,11 +2,12 @@
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <random>
+#include "vec3.h"
 
 #define d_t 0.1
-#define fishCount 200
+#define fishCount 50
 
-#define sigma 0
+#define sigma 0.1
 #define alpha 0.05
 #define beta 0.1
 #define gamma 0.5
@@ -27,21 +28,6 @@
 std::default_random_engine generator;
 std::normal_distribution<double> distribution(0, sqrt(d_t));
 
-class Vec3 {
-public:
-    float arr[3];
-    Vec3() : arr{0, 0, 0} {}
-    Vec3(float xVal, float yVal, float zVal) : arr{xVal, yVal, zVal} {}
-    float x() const { return arr[0]; }
-    float y() const { return arr[1]; }
-    float z() const { return arr[2]; }
-    Vec3 operator+(const Vec3& other) const { return Vec3(x() + other.x(), y() + other.y(), z() + other.z()); }
-    Vec3 operator-(const Vec3& other) const { return Vec3(x() - other.x(), y() - other.y(), z() - other.z()); }
-    Vec3 operator*(const float scalar) const { return Vec3(x()*scalar, y()*scalar, z()*scalar); }
-    float abs() { return std::pow(x()*x()+y()*y()+z()*z(), 0.5); }
-    float dot_product(const Vec3& other) const { return x() * other.x() + y() * other.y() + z() * other.z(); }
-};
-
 class Fish {
     public:
     Vec3 s;
@@ -57,6 +43,20 @@ class Fish {
     sf::Uint8 color() {
         return 240-s.z()*10;
     }
+    void assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
+        cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
+    }
+    void move(std::vector<Fish*> visible) {
+        a = {0,0,0};
+        for (Fish* other_fish: visible) {
+            if (check_fish_visible(other_fish)) {
+                school(other_fish);
+            }
+        }
+        avoidTank();
+        normalise_and_move();
+    }
+    private:
     void avoidTank() {
         for (int dimension = 0; dimension<dimensions; dimension ++) {
             Vec3 reflection_vector;
@@ -110,8 +110,10 @@ class Fish {
             s.arr[dimension] += dx*d_t;
         }
     }
-    void assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
-        cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
+    bool check_fish_visible(Fish* to_check) {
+        Vec3 difference = to_check->s - s;
+        float cos_theta = v.dot_product(difference) / (difference.abs() * v.abs());
+        return cos_theta > cos_fov && to_check != this;
     }
 };
 
@@ -119,12 +121,6 @@ void remove_unordered(std::vector<Fish*>& vec, Fish* value) {
     std::vector<Fish *>::iterator it = std::find(vec.begin(), vec.end(), value);
     *it = std::move(vec.back());
     vec.pop_back();
-}
-
-bool check_fish_visible(Fish* fish, Fish* to_check) {
-    Vec3 difference = to_check->s - fish->s;
-    float cos_theta = fish->v.dot_product(difference) / (difference.abs() * fish->v.abs());
-    return cos_theta > cos_fov;
 }
 
 sf::CircleShape drawFish(Fish* fish) {
@@ -162,14 +158,7 @@ int main() {
                     }
                     std::vector<Fish*> current_fishes = all_fish[i][j][k];
                     for (Fish* fish : current_fishes) {
-                        fish->a = {0,0,0};
-                        for (Fish* other_fish: fish_nearby) {
-                            if (check_fish_visible(fish, other_fish)) {
-                                fish->school(other_fish);
-                            }
-                        }
-                        fish->avoidTank();
-                        fish->normalise_and_move();
+                        fish->move(fish_nearby);
                         window.draw(drawFish(fish));
                         if (static_cast<int>(fish->s.x() / cell_width) != i ||
                             static_cast<int>(fish->s.y() / cell_width) != j ||
