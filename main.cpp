@@ -3,119 +3,8 @@
 #include <windows.h>
 #include <random>
 #include "vec3.h"
-
-#define d_t 0.1
-#define fishCount 50
-
-#define sigma 0.1
-#define alpha 0.05
-#define beta 0.1
-#define gamma 0.5
-#define r 1.5  
-#define p 2.5    
-#define q 1.5       
-#define max_dv 1.5 * d_t
-#define max_v 0.6
-#define min_v 0.03
-#define tank_size 15
-#define cell_count 10
-#define cell_width tank_size / cell_count
-#define dimensions 3
-#define cos_fov -0.86602540378 // = cos 150 deg
-#define r_p std::pow(r,p)
-#define r_q std::pow(r,q)
-
-std::default_random_engine generator;
-std::normal_distribution<double> distribution(0, sqrt(d_t));
-
-class Fish {
-    public:
-    Vec3 s;
-    Vec3 v;
-    Vec3 a;
-    Fish () { 
-        for (int i = 0; i<dimensions; i++) {
-            s.arr[i] = (rand()%800)/80.0f;
-            v.arr[i] = (rand() % 10 - 5) / 5.0f; 
-            a.arr[i] = 0;
-        }
-    }
-    sf::Uint8 color() {
-        return 240-s.z()*10;
-    }
-    void assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
-        cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
-    }
-    void move(std::vector<Fish*> visible) {
-        a = {0,0,0};
-        for (Fish* other_fish: visible) {
-            if (check_fish_visible(other_fish)) {
-                school(other_fish);
-            }
-        }
-        avoidTank();
-        normalise_and_move();
-    }
-    private:
-    void avoidTank() {
-        for (int dimension = 0; dimension<dimensions; dimension ++) {
-            Vec3 reflection_vector;
-            for (int d = 0; d < dimensions; d++) {
-                if (d == dimension) { reflection_vector.arr[d] = -v.arr[d]; }
-                else { reflection_vector.arr[d] = v.arr[d]; }
-            }
-            Vec3 reflection_pos;
-            if (v.arr[dimension] < 0) {
-                reflection_pos.arr[dimension] = 0;
-            } else {
-                reflection_pos.arr[dimension] = tank_size;
-            }
-            for (int other_d = 0; other_d < dimensions; other_d ++) {
-                if (other_d != dimension) {
-                    reflection_pos.arr[other_d] = (s.arr[dimension] * v.arr[other_d])/(reflection_pos.arr[dimension] - v.arr[dimension]) + s.arr[other_d];
-                }
-            }
-            float abs_distance = (reflection_pos - s).abs();
-            float scalar_collision = r_p/std::pow(abs_distance,p) + r_q/std::pow(abs_distance,q);
-            a = a - (v - reflection_vector) * (gamma * scalar_collision);
-        }
-    }
-    void school(Fish* other_fish) {
-        float abs_distance = (other_fish->s - s).abs();
-        float p_term = r_p/std::pow(abs_distance,p);
-        float q_term = r_q/std::pow(abs_distance,q);
-        float scalar_s = p_term - q_term;
-        float scalar_v = p_term + q_term;
-        Vec3 v_vec = v - other_fish->v;
-        Vec3 s_vec = s - other_fish->s;
-        a = a + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
-    }
-
-    void normalise_and_move() {
-        float abs_a = a.abs();
-        if (abs_a > max_dv) {
-            a = a * (max_dv / abs_a);
-        }
-        v = v+(a*d_t);
-        float abs_v = v.abs();
-        float scale_factor = 1;
-        if (abs_v > max_v) {
-            scale_factor = max_v / abs_v;
-        } else if (abs_v < min_v) {
-            scale_factor = min_v / abs_v;
-        }
-        v = v * scale_factor;
-        for (int dimension = 0; dimension<dimensions; dimension++) {
-            float dx = distribution(generator)*sigma + v.arr[dimension];
-            s.arr[dimension] += dx*d_t;
-        }
-    }
-    bool check_fish_visible(Fish* to_check) {
-        Vec3 difference = to_check->s - s;
-        float cos_theta = v.dot_product(difference) / (difference.abs() * v.abs());
-        return cos_theta > cos_fov && to_check != this;
-    }
-};
+#include "consts.h"
+#include "fish.h"
 
 void remove_unordered(std::vector<Fish*>& vec, Fish* value) {
     std::vector<Fish *>::iterator it = std::find(vec.begin(), vec.end(), value);
@@ -125,7 +14,7 @@ void remove_unordered(std::vector<Fish*>& vec, Fish* value) {
 
 sf::CircleShape drawFish(Fish* fish) {
     sf::CircleShape circle(4.f);
-    circle.setFillColor(sf::Color{0, fish->color(), 255});
+    circle.setFillColor(sf::Color{0, static_cast<sf::Uint8>(fish->color()), 255});
     circle.setPosition(fish->s.x()*60, fish->s.y()*60);
     return circle;
 }
