@@ -46,16 +46,18 @@ class Fish {
     public:
     Vec3 s;
     Vec3 v;
+    Vec3 a;
     Fish () { 
         for (int i = 0; i<dimensions; i++) {
             s.arr[i] = (rand()%800)/80.0f;
             v.arr[i] = (rand() % 10 - 5) / 5.0f; 
+            a.arr[i] = 0;
         }
     }
     sf::Uint8 color() {
         return 240-s.z()*10;
     }
-    void avoidTank(Vec3& dv) {
+    void avoidTank() {
         for (int dimension = 0; dimension<dimensions; dimension ++) {
             Vec3 reflection_vector;
             for (int d = 0; d < dimensions; d++) {
@@ -75,15 +77,26 @@ class Fish {
             }
             float abs_distance = (reflection_pos - s).abs();
             float scalar_collision = r_p/std::pow(abs_distance,p) + r_q/std::pow(abs_distance,q);
-            dv = dv - (v - reflection_vector) * (gamma * scalar_collision);
+            a = a - (v - reflection_vector) * (gamma * scalar_collision);
         }
     }
-    void normalise_and_move(Vec3 dv) {
-        float abs_dv = dv.abs();
-        if (abs_dv > max_dv) {
-            dv = dv * (max_dv / abs_dv);
+    void school(Fish* other_fish) {
+        float abs_distance = (other_fish->s - s).abs();
+        float p_term = r_p/std::pow(abs_distance,p);
+        float q_term = r_q/std::pow(abs_distance,q);
+        float scalar_s = p_term - q_term;
+        float scalar_v = p_term + q_term;
+        Vec3 v_vec = v - other_fish->v;
+        Vec3 s_vec = s - other_fish->s;
+        a = a + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
+    }
+
+    void normalise_and_move() {
+        float abs_a = a.abs();
+        if (abs_a > max_dv) {
+            a = a * (max_dv / abs_a);
         }
-        v = v+(dv*d_t);
+        v = v+(a*d_t);
         float abs_v = v.abs();
         float scale_factor = 1;
         if (abs_v > max_v) {
@@ -112,21 +125,6 @@ bool check_fish_visible(Fish* fish, Fish* to_check) {
     Vec3 difference = to_check->s - fish->s;
     float cos_theta = fish->v.dot_product(difference) / (difference.abs() * fish->v.abs());
     return cos_theta > cos_fov;
-}
-
-void check_other_fish(Fish* fish, std::vector<Fish*> fishes, Vec3& dv) {
-    for (Fish* other_fish: fishes) {
-        if (other_fish != fish && check_fish_visible(fish, other_fish)) {
-            float abs_distance = (other_fish->s - fish->s).abs();
-            float p_term = r_p/std::pow(abs_distance,p);
-            float q_term = r_q/std::pow(abs_distance,q);
-            float scalar_s = p_term - q_term;
-            float scalar_v = p_term + q_term;
-            Vec3 v_vec = fish->v - other_fish->v;
-            Vec3 s_vec = fish->s - other_fish->s;
-            dv = dv + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
-        }
-    }
 }
 
 sf::CircleShape drawFish(Fish* fish) {
@@ -164,10 +162,14 @@ int main() {
                     }
                     std::vector<Fish*> current_fishes = all_fish[i][j][k];
                     for (Fish* fish : current_fishes) {
-                        Vec3 dv;
-                        check_other_fish(fish, fish_nearby, dv);
-                        fish->avoidTank(dv);
-                        fish->normalise_and_move(dv);
+                        fish->a = {0,0,0};
+                        for (Fish* other_fish: fish_nearby) {
+                            if (check_fish_visible(fish, other_fish)) {
+                                fish->school(other_fish);
+                            }
+                        }
+                        fish->avoidTank();
+                        fish->normalise_and_move();
                         window.draw(drawFish(fish));
                         if (static_cast<int>(fish->s.x() / cell_width) != i ||
                             static_cast<int>(fish->s.y() / cell_width) != j ||
