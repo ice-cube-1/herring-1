@@ -2,7 +2,6 @@
 #include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <random>
-#include <set>
 
 #define d_t 0.1
 #define fishCount 200
@@ -22,125 +21,111 @@
 #define cell_width tank_size / cell_count
 #define vision grid_size
 #define dimensions 3
+#define r_p std::pow(r,p)
+#define r_q std::pow(r,q)
 
 std::default_random_engine generator;
 std::normal_distribution<double> distribution(0, sqrt(d_t));
 
-float get_abs_difference(float a[dimensions], float b[dimensions]) {
-    float ans = 0;
-    for (int i = 0; i<dimensions; i++) {
-        ans += std::pow(a[i]-b[i],2);
-    }
-    return std::pow(ans, 0.5);
-}
-
-float vector_abs(float a[dimensions]) {
-    float ans = 0;
-    for (int i = 0; i<dimensions; i++) {
-        ans += std::pow(a[i],2);
-    }
-    return std::pow(ans, 0.5);
-}
-
-void get_vector_difference(const float a[dimensions], const float b[dimensions], float result[dimensions]) {
-    for (int i = 0; i < dimensions; i++) {
-        result[i] = a[i] - b[i];
-    }
-}
+class Vec3 {
+public:
+    float arr[3];
+    Vec3() : arr{0, 0, 0} {}
+    Vec3(float xVal, float yVal, float zVal) : arr{xVal, yVal, zVal} {}
+    float x() const { return arr[0]; }
+    float y() const { return arr[1]; }
+    float z() const { return arr[2]; }
+    Vec3 operator+(const Vec3& other) const { return Vec3(x() + other.x(), y() + other.y(), z() + other.z()); }
+    Vec3 operator-(const Vec3& other) const { return Vec3(x() - other.x(), y() - other.y(), z() - other.z()); }
+    Vec3 operator*(const float scalar) const { return Vec3(x()*scalar, y()*scalar, z()*scalar); }
+    float abs() { return std::pow(x()*x()+y()*y()+z()*z(), 0.5); }
+};
 
 class Fish {
     public:
-    float x[dimensions];
-    float v[dimensions];
+    Vec3 s;
+    Vec3 v;
     Fish () { 
         for (int i = 0; i<dimensions; i++) {
-            x[i] = (rand()%800)/80.0f;
-            v[i] = (rand() % 10 - 5) / 5.0f; 
+            s.arr[i] = (rand()%800)/80.0f;
+            v.arr[i] = (rand() % 10 - 5) / 5.0f; 
         }
     }
     sf::Uint8 color() {
-        return 240-x[2]*10;
+        return 240-s.z()*10;
     }
-    void avoidTank(float dv[dimensions]) {
+    void avoidTank(Vec3& dv) {
         for (int dimension = 0; dimension<dimensions; dimension ++) {
-            float reflection_vector[dimensions];
+            Vec3 reflection_vector;
             for (int d = 0; d < dimensions; d++) {
-                if (d == dimension) { reflection_vector[d] = -v[d]; }
-                else { reflection_vector[d] = v[d]; }
+                if (d == dimension) { reflection_vector.arr[d] = -v.arr[d]; }
+                else { reflection_vector.arr[d] = v.arr[d]; }
             }
-            float reflection_pos[dimensions];
-            if (v[dimension] < 0) {
-                reflection_pos[dimension] = 0;
+            Vec3 reflection_pos;
+            if (v.arr[dimension] < 0) {
+                reflection_pos.arr[dimension] = 0;
             } else {
-                reflection_pos[dimension] = tank_size;
+                reflection_pos.arr[dimension] = tank_size;
             }
             for (int other_d = 0; other_d < dimensions; other_d ++) {
                 if (other_d != dimension) {
-                    reflection_pos[other_d] = (x[dimension] * v[other_d])/(reflection_pos[dimension] - v[dimension]) + x[other_d];
+                    reflection_pos.arr[other_d] = (s.arr[dimension] * v.arr[other_d])/(reflection_pos.arr[dimension] - v.arr[dimension]) + s.arr[other_d];
                 }
             }
-            float abs_distance = get_abs_difference(reflection_pos, x);
-            float scalar_collision = std::pow(r,p)/std::pow(abs_distance,p) + std::pow(r,q)/std::pow(abs_distance,q);
-            for (int d = 0; d < dimensions; d++) {
-                dv[d] -= gamma * scalar_collision * (v[d] - reflection_vector[d]);
-            }
+            float abs_distance = (reflection_pos - s).abs();
+            float scalar_collision = r_p/std::pow(abs_distance,p) + r_q/std::pow(abs_distance,q);
+            dv = dv - (v - reflection_vector) * (gamma * scalar_collision);
         }
     }
-    void normalise_and_move(float dv[dimensions]) {
-        float abs_dv = vector_abs(dv);
+    void normalise_and_move(Vec3 dv) {
+        float abs_dv = dv.abs();
         if (abs_dv > max_dv) {
-            float scale_factor = max_dv / abs_dv;
-            for (int dimension = 0; dimension < dimensions; dimension++) {
-                dv[dimension] *= scale_factor;
-            }
+            dv = dv * (max_dv / abs_dv);
         }
-
-        for (int dimension = 0; dimension<dimensions; dimension++) {
-            v[dimension] += dv[dimension]*d_t;
-        }
-
-        float abs_v = vector_abs(v);
+        v = v+(dv*d_t);
+        float abs_v = v.abs();
         float scale_factor = 1;
         if (abs_v > max_v) {
             scale_factor = max_v / abs_v;
         } else if (abs_v < min_v) {
             scale_factor = min_v / abs_v;
         }
-        for (int dimension = 0; dimension < dimensions; dimension++) {
-            v[dimension] *= scale_factor;
-        }
-
+        v = v * scale_factor;
         for (int dimension = 0; dimension<dimensions; dimension++) {
-            float dx = distribution(generator)*sigma + v[dimension];
-            x[dimension] += dx*d_t;
+            float dx = distribution(generator)*sigma + v.arr[dimension];
+            s.arr[dimension] += dx*d_t;
         }
     }
     void assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
-        cells[static_cast<int>(x[0] / cell_width)][static_cast<int>(x[1] / cell_width)][static_cast<int>(x[2] / cell_width)].push_back(this);
+        cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
     }
 };
 
-void check_other_fish(Fish* fish, std::set<Fish*> fishes, float dv[dimensions]) {
+void remove_unordered(std::vector<Fish*>& vec, Fish* value) {
+    std::vector<Fish *>::iterator it = std::find(vec.begin(), vec.end(), value);
+    *it = std::move(vec.back());
+    vec.pop_back();
+}
+
+void check_other_fish(Fish* fish, std::vector<Fish*> fishes, Vec3& dv) {
     for (Fish* other_fish: fishes) {
         if (other_fish != fish) {
-            float abs_distance = get_abs_difference(other_fish->x, fish->x);
-            float scalar_s = std::pow(r,p)/std::pow(abs_distance,p) - std::pow(r,q)/std::pow(abs_distance,q);
-            float scalar_v = std::pow(r,p)/std::pow(abs_distance,p) + std::pow(r,q)/std::pow(abs_distance,q);
-            float v_vec[dimensions];
-            float s_vec[dimensions];
-            get_vector_difference(fish->v, other_fish->v, v_vec);
-            get_vector_difference(fish->x, other_fish->x, s_vec);
-            for (int dimension = 0; dimension<dimensions; dimension++) {
-                dv[dimension] += scalar_s * alpha * s_vec[dimension] - scalar_v * beta * v_vec[dimension];
-            }
+            float abs_distance = (other_fish->s - fish->s).abs();
+            float p_term = r_p/std::pow(abs_distance,p);
+            float q_term = r_q/std::pow(abs_distance,q);
+            float scalar_s = p_term - q_term;
+            float scalar_v = p_term + q_term;
+            Vec3 v_vec = fish->v - other_fish->v;
+            Vec3 s_vec = fish->s - other_fish->s;
+            dv = dv + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
         }
     }
 }
 
-sf::CircleShape drawFish(Fish fish) {
+sf::CircleShape drawFish(Fish* fish) {
     sf::CircleShape circle(4.f);
-    circle.setFillColor(sf::Color{0, fish.color(), 255});
-    circle.setPosition(fish.x[0]*60, fish.x[1]*60);
+    circle.setFillColor(sf::Color{0, fish->color(), 255});
+    circle.setPosition(fish->s.x()*60, fish->s.y()*60);
     return circle;
 }
 
@@ -156,14 +141,14 @@ int main() {
         for (int i = 0; i<cell_count; i++) {
             for (int j = 0; j < cell_count; j++) {
                 for (int k = 0; k< cell_count; k++) {
-                    std::set<Fish*> fish_nearby;
+                    std::vector<Fish*> fish_nearby;
                     for (int ci = i-1; ci <= i+1; ci++) {
                         if (0 <= ci && ci < cell_count) {
                             for (int cj = j-1; cj <= j+1; cj++) {
                                 if (0 <= cj && cj < cell_count) {
                                     for (int ck = k-1; ck <= k+1; ck++) {
                                         if (0 <= ck && ck < cell_count) {
-                                            fish_nearby.insert(all_fish[ci][cj][ck].begin(), all_fish[ci][cj][ck].end());
+                                            fish_nearby.insert(fish_nearby.end(), all_fish[ci][cj][ck].begin(), all_fish[ci][cj][ck].end());
                                         }
                                     }
                                 }
@@ -172,21 +157,22 @@ int main() {
                     }
                     std::vector<Fish*> current_fishes = all_fish[i][j][k];
                     for (Fish* fish : current_fishes) {
-                        float dv[dimensions] = {0, 0, 0};
+                        Vec3 dv;
                         check_other_fish(fish, fish_nearby, dv);
                         fish->avoidTank(dv);
                         fish->normalise_and_move(dv);
-                        window.draw(drawFish(*fish));
-                        if (static_cast<int>(fish->x[0] / cell_width) != i ||
-                            static_cast<int>(fish->x[1] / cell_width) != j ||
-                            static_cast<int>(fish->x[2] / cell_width) != k) {
-                            all_fish[i][j][k].erase(std::find(all_fish[i][j][k].begin(), all_fish[i][j][k].end(), fish));
+                        window.draw(drawFish(fish));
+                        if (static_cast<int>(fish->s.x() / cell_width) != i ||
+                            static_cast<int>(fish->s.y() / cell_width) != j ||
+                            static_cast<int>(fish->s.z() / cell_width) != k) {
+                            remove_unordered(all_fish[i][j][k], fish);
                             fish->assign_cell(all_fish);
                         }
                     }
                 }
             }
         }
+        std::cout<<t<<"\n";
         window.display();
     }
 }
