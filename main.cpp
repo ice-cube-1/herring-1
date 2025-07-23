@@ -6,7 +6,7 @@
 #define d_t 0.1
 #define fishCount 200
 
-#define sigma 0.2
+#define sigma 0
 #define alpha 0.05
 #define beta 0.1
 #define gamma 0.5
@@ -19,8 +19,8 @@
 #define tank_size 15
 #define cell_count 10
 #define cell_width tank_size / cell_count
-#define vision grid_size
 #define dimensions 3
+#define cos_fov -0.86602540378 // = cos 150 deg
 #define r_p std::pow(r,p)
 #define r_q std::pow(r,q)
 
@@ -39,6 +39,7 @@ public:
     Vec3 operator-(const Vec3& other) const { return Vec3(x() - other.x(), y() - other.y(), z() - other.z()); }
     Vec3 operator*(const float scalar) const { return Vec3(x()*scalar, y()*scalar, z()*scalar); }
     float abs() { return std::pow(x()*x()+y()*y()+z()*z(), 0.5); }
+    float dot_product(const Vec3& other) const { return x() * other.x() + y() * other.y() + z() * other.z(); }
 };
 
 class Fish {
@@ -107,9 +108,15 @@ void remove_unordered(std::vector<Fish*>& vec, Fish* value) {
     vec.pop_back();
 }
 
+bool check_fish_visible(Fish* fish, Fish* to_check) {
+    Vec3 difference = to_check->s - fish->s;
+    float cos_theta = fish->v.dot_product(difference) / (difference.abs() * fish->v.abs());
+    return cos_theta > cos_fov;
+}
+
 void check_other_fish(Fish* fish, std::vector<Fish*> fishes, Vec3& dv) {
     for (Fish* other_fish: fishes) {
-        if (other_fish != fish) {
+        if (other_fish != fish && check_fish_visible(fish, other_fish)) {
             float abs_distance = (other_fish->s - fish->s).abs();
             float p_term = r_p/std::pow(abs_distance,p);
             float q_term = r_q/std::pow(abs_distance,q);
