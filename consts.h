@@ -4,7 +4,7 @@
 
 constexpr double d_t = 0.1;
 
-constexpr int fishCount = 200;
+constexpr int fishCount = 100;
 constexpr double sigma = 0;
 constexpr double alpha = 0.05;
 constexpr double beta = 0.1;
