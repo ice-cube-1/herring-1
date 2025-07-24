@@ -12,6 +12,7 @@
                 "school.cpp",
                 "predator.cpp",
                 "herring.cpp",
+                "utils.cpp",
                 "consts.cpp",
                 "-IC:/msys64/mingw64/include", 
                 "-LC:/msys64/mingw64/lib",

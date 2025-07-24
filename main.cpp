@@ -8,12 +8,7 @@
 #include "herring.h"
 #include "school.h"
 #include "predator.h"
-
-void remove_unordered(std::vector<Herring*>& vec, Herring* value) {
-    std::vector<Herring *>::iterator it = std::find(vec.begin(), vec.end(), value);
-    *it = std::move(vec.back());
-    vec.pop_back();
-}
+#include "utils.h"
 
 sf::CircleShape drawHerring(Herring* herring) {
     sf::CircleShape circle(4.f);
@@ -83,6 +78,7 @@ int main() {
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
     }
+    int alive = herringCount;
     sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
     for (int t = 0; t<36000; t++) {
         window.clear(sf::Color::White);
@@ -111,13 +107,18 @@ int main() {
 
                     std::vector<Herring*> current_herringes = all_herring[i][j][k];
                     for (Herring* herring : current_herringes) {
-                        herring->move(herring_nearby, predators);
-                        window.draw(drawHerring(herring));
-                        if (static_cast<int>(herring->s.x() / cell_width) != i ||
-                            static_cast<int>(herring->s.y() / cell_width) != j ||
-                            static_cast<int>(herring->s.z() / cell_width) != k) {
+                        if (!herring->move(herring_nearby, predators)) {
                             remove_unordered(all_herring[i][j][k], herring);
-                            herring->assign_cell(all_herring);
+                            alive -= 1;
+                            std::cout << alive << "\n";
+                        } else {
+                            window.draw(drawHerring(herring));
+                            if (static_cast<int>(herring->s.x() / cell_width) != i ||
+                                static_cast<int>(herring->s.y() / cell_width) != j ||
+                                static_cast<int>(herring->s.z() / cell_width) != k) {
+                                remove_unordered(all_herring[i][j][k], herring);
+                                herring->assign_cell(all_herring);
+                        }
                         }
                     }
                 }

@@ -5,6 +5,7 @@
 #include <windows.h>
 #include "herring.h"
 #include "predator.h"
+#include "utils.h"
 
 
 Herring::Herring () { 
@@ -20,7 +21,7 @@ int Herring::color() {
 void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]) {
     cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
 }
-void Herring::move(std::vector<Herring*> visible, Predator* predators) {
+bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
     a = {0,0,0};
     for (Herring* other_herring: visible) {
         if (check_herring_visible(other_herring)) {
@@ -28,8 +29,11 @@ void Herring::move(std::vector<Herring*> visible, Predator* predators) {
         }
     }
     avoidTank();
-    avoid_predators(predators);
+    if (!avoid_predators(predators)) {
+        return false;
+    }
     normalise_and_move();
+    return true;
 }
 void Herring::avoidTank() {
     for (int dimension = 0; dimension<dimensions; dimension ++) {
@@ -65,10 +69,14 @@ void Herring::school(Herring* other_herring) {
     a = a + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
 }
 
-void Herring::avoid_predators(Predator predators[]) {
+bool Herring::avoid_predators(Predator predators[]) {
     for (int i = 0; i<predator_count; i++) {
+        if ((s-predators[i].s).abs() < 0.2) {
+            return false;
+        }
         a = a + (s-predators[i].s) * (delta * std::pow(r_1, theta_1)/std::pow((s-predators[i].s).abs(), theta_1));
     } 
+    return true;
 }
 
 void Herring::normalise_and_move() {
