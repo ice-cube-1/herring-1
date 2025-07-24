@@ -10,8 +10,8 @@
 
 Herring::Herring () { 
     for (int i = 0; i<dimensions; i++) {
-        s.arr[i] = (rand()%800)/80.0f;
-        v.arr[i] = (rand() % 10 - 5) / 5.0f; 
+        s.arr[i] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/15));
+        v.arr[i] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
         a.arr[i] = 0;
     }
 }
@@ -96,6 +96,8 @@ void Herring::normalise_and_move() {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
+        if (s.arr[dimension] < 0) { s.arr[dimension] = 0; }
+        if (s.arr[dimension] > tank_size) { s.arr[dimension] = tank_size; }
     }
 }
 

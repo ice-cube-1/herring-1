@@ -13,7 +13,7 @@
 sf::CircleShape drawHerring(Herring* herring) {
     sf::CircleShape circle(4.f);
     circle.setFillColor(sf::Color{0, static_cast<sf::Uint8>(herring->color()), 255});
-    circle.setPosition(herring->s.x()*60, herring->s.y()*60);
+    circle.setPosition(herring->s.x()*40+100, herring->s.y()*40+100);
     return circle;
 }
 
@@ -68,8 +68,8 @@ void find_schools() {
 
 sf::CircleShape drawPredator(Predator predator) {
     sf::CircleShape circle(6.f);
-    circle.setFillColor(sf::Color{255,0,0});
-    circle.setPosition(predator.s.x()*60, predator.s.y()*60);
+    circle.setFillColor(sf::Color{255,static_cast<sf::Uint8>(predator.color()),0});
+    circle.setPosition(predator.s.x()*40+100, predator.s.y()*40+100);
     return circle;
 }
 

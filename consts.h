@@ -5,7 +5,7 @@
 
 constexpr double d_t = 0.1;
 
-constexpr int herringCount = 300;
+constexpr int herringCount = 150;
 constexpr double sigma = 0;
 constexpr double alpha = 0.05;
 constexpr double beta = 0.1;
@@ -33,11 +33,11 @@ extern std::default_random_engine generator;
 extern std::normal_distribution<double> distribution;
 
 // PREY AVOIDANCE
-const double r_1 = 0.5;
-const double theta_1 = 2;
+const double r_1 = 0.8;
+const double theta_1 = 1.5;
 const double delta = 1;
 
-// PREDATOR
+// PREDATORS
 const int predator_count = 5;
 const double r_2 = 3;
 const double theta_2 = 2;
@@ -45,4 +45,4 @@ const double gamma_1 = 0.2;
 const double gamma_2 = 0.1;
 const double max_v_cod = 0.2;
 const double min_v_cod = 0.04;
-const double max_a_cod = 0.4;
+const double max_a_cod = 0.6;

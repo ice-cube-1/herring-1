@@ -12,6 +12,7 @@ class Predator {
     Vec3 v;
     Vec3 a;
     Predator();
+    int color();
     void move(std::vector<School> schools);
     private:
     void attack_school(School& school);
