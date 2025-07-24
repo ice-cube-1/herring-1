@@ -6,6 +6,8 @@
 #include "vec3.h"
 #include "consts.h"
 #include "herring.h"
+#include "school.h"
+#include "predator.h"
 
 void remove_unordered(std::vector<Herring*>& vec, Herring* value) {
     std::vector<Herring *>::iterator it = std::find(vec.begin(), vec.end(), value);
@@ -19,23 +21,6 @@ sf::CircleShape drawHerring(Herring* herring) {
     circle.setPosition(herring->s.x()*60, herring->s.y()*60);
     return circle;
 }
-
-class School {
-    public:
-    std::vector<std::array<int, 3>> cells;
-    std::vector<Herring*> herring;
-    School() {};
-    Vec3 average_s() {
-        Vec3 s;
-        for (Herring* h: herring) { s = s + h->s; }
-        return s * (1.0f / herring.size());
-    }
-    Vec3 average_v() {
-        Vec3 v;
-        for (Herring* h: herring) { v = v + h->v; }
-        return v * (1.0f / herring.size());
-    }
-};
 
 std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
 std::vector<School> schools;
@@ -86,57 +71,6 @@ void find_schools() {
     }
 }
 
-class Predator {
-    public:
-    Vec3 s;
-    Vec3 v;
-    Vec3 a;
-    Predator() {
-        for (int i = 0; i<dimensions; i++) {
-            s.arr[i] = (rand()%800)/80.0f;
-            v.arr[i] = (rand() % 10 - 5) / 5.0f; 
-            a.arr[i] = 0;
-        }
-    }
-    void move(std::vector<School> schools) {
-        School chosen_school = schools[0];
-        float dist = std::pow(2,31)-1;
-        for (School school: schools) {
-            float check_dist = (school.average_s() - s).abs();
-            if (dist > check_dist) {
-                dist = check_dist;
-                chosen_school = school;
-            }
-        }
-        attack_school(chosen_school);
-    }
-    private:
-    void attack_school(School& school) {
-        Vec3 s_c = school.average_s();
-        Vec3 v_c = school.average_v();
-        a = ((s - s_c) + (v - v_c) * gamma_2) * -gamma_1;
-        a = a * (std::pow(r_2, theta_2)/std::pow((s-s_c).abs(),theta_2));
-        std::cout << a.abs()<<" a ";
-        float abs_a = a.abs();
-        if (abs_a > max_a_cod) {
-            a = a * (max_a_cod / abs_a);
-        }
-        v = v+a*d_t;
-        float abs_v = v.abs();
-        float scale_factor = 1;
-        if (abs_v > max_v_cod) {
-            scale_factor = max_v_cod / abs_v;
-        } else if (abs_v < min_v_cod) {
-            scale_factor = min_v_cod / abs_v;
-        }
-        v = v * scale_factor;
-        for (int dimension = 0; dimension<dimensions; dimension++) {
-            float dx = distribution(generator)*sigma + v.arr[dimension];
-            s.arr[dimension] += dx*d_t;
-        }
-    }
-};
-
 sf::CircleShape drawPredator(Predator predator) {
     sf::CircleShape circle(6.f);
     circle.setFillColor(sf::Color{255,0,0});
@@ -144,7 +78,7 @@ sf::CircleShape drawPredator(Predator predator) {
     return circle;
 }
 
-Predator predators[5];
+Predator predators[predator_count];
 int main() {
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
@@ -153,7 +87,7 @@ int main() {
     for (int t = 0; t<36000; t++) {
         window.clear(sf::Color::White);
         find_schools();
-        for (int i = 0; i<5; i++) {
+        for (int i = 0; i<predator_count; i++) {
             predators[i].move(schools);
             window.draw(drawPredator(predators[i]));
         }
@@ -177,7 +111,7 @@ int main() {
 
                     std::vector<Herring*> current_herringes = all_herring[i][j][k];
                     for (Herring* herring : current_herringes) {
-                        herring->move(herring_nearby);
+                        herring->move(herring_nearby, predators);
                         window.draw(drawHerring(herring));
                         if (static_cast<int>(herring->s.x() / cell_width) != i ||
                             static_cast<int>(herring->s.y() / cell_width) != j ||

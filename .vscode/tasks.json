@@ -9,6 +9,8 @@
                 "-g",
                 "main.cpp",
                 "vec3.cpp",
+                "school.cpp",
+                "predator.cpp",
                 "herring.cpp",
                 "consts.cpp",
                 "-IC:/msys64/mingw64/include", 
