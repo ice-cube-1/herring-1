@@ -12,8 +12,8 @@ class School {
     std::vector<std::array<int, 3>> cells;
     std::vector<Herring*> herring;
     School();
-    Vec3 average_s();
-    Vec3 average_v();
+    Vec3 average_s() const;
+    Vec3 average_v() const;
 };
 
 #endif

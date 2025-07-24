@@ -13,7 +13,7 @@ class Predator {
     Vec3 a;
     Predator();
     int color();
-    void move(std::vector<School> schools);
+    void move(const std::vector<School>& schools);
     private:
     void attack_school(School& school);
 };

@@ -18,10 +18,10 @@ int Predator::color() {
     return 240-s.z()*10;
 }
 
-void Predator::move(std::vector<School> schools) {
+void Predator::move(const std::vector<School>& schools) {
     School chosen_school = schools[0];
     float dist = std::pow(2,31)-1;
-    for (School school: schools) {
+    for (const School& school: schools) {
         float check_dist = (school.average_s() - s).abs();
         if (dist > check_dist && school.herring.size() > 4) {
             dist = check_dist;

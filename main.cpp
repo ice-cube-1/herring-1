@@ -19,7 +19,6 @@ sf::CircleShape drawHerring(Herring* herring) {
 
 std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
 std::vector<School> schools;
-School current_school;
 Herring herring_lst[herringCount];
 
 
@@ -34,16 +33,18 @@ bool check_cell_in_school(std::array<int, 3> to_check) {
     return false;
 }
 
-void flood_fill(std::array<int, 3> coords) {
+void flood_fill(std::array<int, 3> coords, School& current_school) {
     current_school.cells.push_back(coords);
-    current_school.herring.insert(current_school.herring.end(), all_herring[coords[0]][coords[1]][coords[2]].begin(), all_herring[coords[0]][coords[1]][coords[2]].end() );
+    for (Herring* h : all_herring[coords[0]][coords[1]][coords[2]]) {
+        current_school.herring.push_back(h);
+    }
     int directions[6][3] = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
     for (int* direction: directions) {
         std::array<int,3> to_check = {direction[0]+coords[0],direction[1]+coords[1],direction[2]+coords[2]};
         if (to_check[0] >= 0 && to_check[0] < cell_count && to_check[1] >= 0 && to_check[1] < cell_count && to_check[2] >= 0 && to_check[2] < cell_count) {
             if (std::find(current_school.cells.begin(), current_school.cells.end(), to_check) == current_school.cells.end()) {
                 if (all_herring[to_check[0]][to_check[1]][to_check[2]].size() != 0) {
-                    flood_fill((std::array<int,3>){to_check});
+                    flood_fill((std::array<int,3>){to_check}, current_school);
                 }
             }
         }
@@ -51,15 +52,16 @@ void flood_fill(std::array<int, 3> coords) {
 }
 
 void find_schools() {
-    schools = {};
+    int size = schools.size();
+    schools.clear();
     for (int i = 0; i<cell_count; i++) {
         for (int j = 0; j<cell_count; j++) {
             for (int k = 0; k<cell_count; k++) {
                 std::array<int,3> coords = {i,j,k};
                 if (!check_cell_in_school(coords) && all_herring[i][j][k].size() > 0) {
-                    current_school = {};
-                    flood_fill(coords);
-                    schools.push_back(current_school);
+                    School current_school;
+                    flood_fill(coords, current_school);
+                    schools.push_back(std::move(current_school));
                 }
             }
         }

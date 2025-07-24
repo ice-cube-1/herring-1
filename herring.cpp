@@ -19,7 +19,10 @@ int Herring::color() {
     return 240-s.z()*10;
 }
 void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]) {
-    cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
+    int ix = std::min(static_cast<int>(s.x() / cell_width), cell_count - 1);
+    int iy = std::min(static_cast<int>(s.y() / cell_width), cell_count - 1);
+    int iz = std::min(static_cast<int>(s.z() / cell_width), cell_count - 1);
+    cells[ix][iy][iz].push_back(this);
 }
 bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
     a = {0,0,0};
@@ -50,18 +53,27 @@ void Herring::avoidTank() {
         }
         for (int other_d = 0; other_d < dimensions; other_d ++) {
             if (other_d != dimension) {
-                reflection_pos.arr[other_d] = (s.arr[dimension] * v.arr[other_d])/(reflection_pos.arr[dimension] - v.arr[dimension]) + s.arr[other_d];
+                float divisor = (reflection_pos.arr[dimension] - v.arr[dimension]);
+                if (abs(divisor) < 1e-6f) { divisor = 1e-6f; }
+                reflection_pos.arr[other_d] = (s.arr[dimension] * v.arr[other_d])/divisor + s.arr[other_d];
             }
         }
         float abs_distance = (reflection_pos - s).abs();
+        if (abs_distance < 1e-6f) {
+            abs_distance = 1e-6f;
+        }
         float scalar_collision = r_p/std::pow(abs_distance,p) + r_q/std::pow(abs_distance,q);
-        a = a - (v - reflection_vector) * (gamma * scalar_collision);
+        if (std::isfinite(scalar_collision)) {
+            a = a - (v - reflection_vector) * (gamma * scalar_collision);
+        }
     }
 }
 void Herring::school(Herring* other_herring) {
+    const float dist_eps = 1e-6f;
     float abs_distance = (other_herring->s - s).abs();
-    float p_term = r_p/std::pow(abs_distance,p);
-    float q_term = r_q/std::pow(abs_distance,q);
+    abs_distance = std::max(abs_distance, dist_eps);
+    float p_term = r_p / std::pow(abs_distance, p);
+    float q_term = r_q / std::pow(abs_distance, q);
     float scalar_s = p_term - q_term;
     float scalar_v = p_term + q_term;
     Vec3 v_vec = v - other_herring->v;
@@ -74,18 +86,18 @@ bool Herring::avoid_predators(Predator predators[]) {
         if ((s-predators[i].s).abs() < 0.2) {
             return false;
         }
-        a = a + (s-predators[i].s) * (delta * std::pow(r_1, theta_1)/std::pow((s-predators[i].s).abs(), theta_1));
+        a = a + (s-predators[i].s) * (delta * std::pow(r_1, theta_1)/std::max(1e-6f,static_cast<float>(std::pow((s-predators[i].s).abs(), theta_1))));
     } 
     return true;
 }
 
 void Herring::normalise_and_move() {
-    float abs_a = a.abs();
+    float abs_a = std::max(1e-6f,a.abs());
     if (abs_a > max_dv) {
         a = a * (max_dv / abs_a);
     }
     v = v+(a*d_t);
-    float abs_v = v.abs();
+    float abs_v = std::max(1e-6f,v.abs());
     float scale_factor = 1;
     if (abs_v > max_v) {
         scale_factor = max_v / abs_v;
