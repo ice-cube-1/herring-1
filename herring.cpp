@@ -3,36 +3,33 @@
 #include <iostream>
 #include <random>
 #include <windows.h>
-#include "fish.h"
-
-std::default_random_engine generator;
-std::normal_distribution<double> distribution(0, sqrt(d_t));
+#include "herring.h"
 
 
-Fish::Fish () { 
+Herring::Herring () { 
     for (int i = 0; i<dimensions; i++) {
         s.arr[i] = (rand()%800)/80.0f;
         v.arr[i] = (rand() % 10 - 5) / 5.0f; 
         a.arr[i] = 0;
     }
 }
-int Fish::color() {
+int Herring::color() {
     return 240-s.z()*10;
 }
-void Fish::assign_cell(std::vector<Fish*> cells[cell_count][cell_count][cell_count]) {
+void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]) {
     cells[static_cast<int>(s.x() / cell_width)][static_cast<int>(s.y() / cell_width)][static_cast<int>(s.z() / cell_width)].push_back(this);
 }
-void Fish::move(std::vector<Fish*> visible) {
+void Herring::move(std::vector<Herring*> visible) {
     a = {0,0,0};
-    for (Fish* other_fish: visible) {
-        if (check_fish_visible(other_fish)) {
-            school(other_fish);
+    for (Herring* other_herring: visible) {
+        if (check_herring_visible(other_herring)) {
+            school(other_herring);
         }
     }
     avoidTank();
     normalise_and_move();
 }
-void Fish::avoidTank() {
+void Herring::avoidTank() {
     for (int dimension = 0; dimension<dimensions; dimension ++) {
         Vec3 reflection_vector;
         for (int d = 0; d < dimensions; d++) {
@@ -55,18 +52,18 @@ void Fish::avoidTank() {
         a = a - (v - reflection_vector) * (gamma * scalar_collision);
     }
 }
-void Fish::school(Fish* other_fish) {
-    float abs_distance = (other_fish->s - s).abs();
+void Herring::school(Herring* other_herring) {
+    float abs_distance = (other_herring->s - s).abs();
     float p_term = r_p/std::pow(abs_distance,p);
     float q_term = r_q/std::pow(abs_distance,q);
     float scalar_s = p_term - q_term;
     float scalar_v = p_term + q_term;
-    Vec3 v_vec = v - other_fish->v;
-    Vec3 s_vec = s - other_fish->s;
+    Vec3 v_vec = v - other_herring->v;
+    Vec3 s_vec = s - other_herring->s;
     a = a + s_vec * (scalar_s * alpha) - v_vec * (scalar_v * beta);
 }
 
-void Fish::normalise_and_move() {
+void Herring::normalise_and_move() {
     float abs_a = a.abs();
     if (abs_a > max_dv) {
         a = a * (max_dv / abs_a);
@@ -86,7 +83,7 @@ void Fish::normalise_and_move() {
     }
 }
 
-bool Fish::check_fish_visible(Fish* to_check) {
+bool Herring::check_herring_visible(Herring* to_check) {
     Vec3 difference = to_check->s - s;
     float cos_theta = v.dot_product(difference) / (difference.abs() * v.abs());
     return cos_theta > cos_fov && to_check != this;
