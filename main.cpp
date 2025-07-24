@@ -20,15 +20,32 @@ sf::CircleShape drawFish(Fish* fish) {
     return circle;
 }
 
+class School {
+    public:
+    std::vector<std::array<int, 3>> cells;
+    std::vector<Fish*> fish;
+    School() {};
+    Vec3 average_s() {
+        Vec3 s;
+        for (Fish* f: fish) { s = s + f->s; }
+        return s * (1/fish.size());
+    }
+    Vec3 average_v() {
+        Vec3 v;
+        for (Fish* f: fish) { v = v + f->v; }
+        return v * (1/fish.size());
+    }
+};
+
 std::vector<Fish*> all_fish[cell_count][cell_count][cell_count];
-std::vector<std::vector<std::array<int, 3>>> schools;
-std::vector<std::array<int, 3>> current_school;
+std::vector<School> schools;
+School current_school;
 Fish fish_lst[fishCount];
 
 
 bool check_cell_in_school(std::array<int, 3> to_check) {
-    for (std::vector<std::array<int, 3>> school: schools) {
-        for (std::array<int, 3> cell: school) {
+    for (School school: schools) {
+        for (std::array<int, 3> cell: school.cells) {
             if (cell == to_check) {
                 return true;
             }
@@ -38,12 +55,13 @@ bool check_cell_in_school(std::array<int, 3> to_check) {
 }
 
 void flood_fill(std::array<int, 3> coords) {
-    current_school.push_back(coords);
+    current_school.cells.push_back(coords);
+    current_school.fish.insert(current_school.fish.end(), all_fish[coords[0]][coords[1]][coords[2]].begin(), all_fish[coords[0]][coords[1]][coords[2]].end() );
     int directions[6][3] = {{1,0,0}, {-1,0,0}, {0,1,0}, {0,-1,0}, {0,0,1}, {0,0,-1}};
     for (int* direction: directions) {
         std::array<int,3> to_check = {direction[0]+coords[0],direction[1]+coords[1],direction[2]+coords[2]};
         if (to_check[0] >= 0 && to_check[0] < cell_count && to_check[1] >= 0 && to_check[1] < cell_count && to_check[2] >= 0 && to_check[2] < cell_count) {
-            if (std::find(current_school.begin(), current_school.end(), to_check) == current_school.end()) {
+            if (std::find(current_school.cells.begin(), current_school.cells.end(), to_check) == current_school.cells.end()) {
                 if (all_fish[to_check[0]][to_check[1]][to_check[2]].size() != 0) {
                     flood_fill((std::array<int,3>){to_check});
                 }
@@ -78,8 +96,8 @@ int main() {
         window.clear(sf::Color::White);
         find_schools();
         std::cout << schools.size();
-        for (std::vector<std::array<int, 3>> school: schools) {
-            std::cout << " " << school.size() << " ";
+        for (School school: schools) {
+            std::cout << " " << school.fish.size() << " ";
         }
         std::cout << "\n";
         for (int i = 0; i<cell_count; i++) {
