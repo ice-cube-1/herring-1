@@ -24,6 +24,7 @@ void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][ce
     int iz = std::min(static_cast<int>(s.z() / cell_width), cell_count - 1);
     cells[ix][iy][iz].push_back(this);
 }
+
 bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
     a = {0,0,0};
     for (Herring* other_herring: visible) {
@@ -31,43 +32,14 @@ bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
             school(other_herring);
         }
     }
-    avoidTank();
+    avoidTank(s,v,a);
     if (!avoid_predators(predators)) {
         return false;
     }
     normalise_and_move();
     return true;
 }
-void Herring::avoidTank() {
-    for (int dimension = 0; dimension<dimensions; dimension ++) {
-        Vec3 reflection_vector;
-        for (int d = 0; d < dimensions; d++) {
-            if (d == dimension) { reflection_vector.arr[d] = -v.arr[d]; }
-            else { reflection_vector.arr[d] = v.arr[d]; }
-        }
-        Vec3 reflection_pos;
-        if (v.arr[dimension] < 0) {
-            reflection_pos.arr[dimension] = 0;
-        } else {
-            reflection_pos.arr[dimension] = tank_size;
-        }
-        for (int other_d = 0; other_d < dimensions; other_d ++) {
-            if (other_d != dimension) {
-                float divisor = (reflection_pos.arr[dimension] - v.arr[dimension]);
-                if (abs(divisor) < epsilon) { divisor = epsilon; }
-                reflection_pos.arr[other_d] = (s.arr[dimension] * v.arr[other_d])/divisor + s.arr[other_d];
-            }
-        }
-        float abs_distance = (reflection_pos - s).abs();
-        if (abs_distance < epsilon) {
-            abs_distance = epsilon;
-        }
-        float scalar_collision = r_p/std::pow(abs_distance,p) + r_q/std::pow(abs_distance,q);
-        if (std::isfinite(scalar_collision)) {
-            a = a - (v - reflection_vector) * (gamma * scalar_collision);
-        }
-    }
-}
+
 void Herring::school(Herring* other_herring) {
     const float dist_eps = epsilon;
     float abs_distance = (other_herring->s - s).abs();
@@ -108,8 +80,8 @@ void Herring::normalise_and_move() {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        if (s.arr[dimension] < 0) { s.arr[dimension] = 0; }
-        if (s.arr[dimension] > tank_size) { s.arr[dimension] = tank_size; }
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
     }
 }
 

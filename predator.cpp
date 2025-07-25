@@ -5,6 +5,7 @@
 #include "herring.h"
 #include <iostream>
 #include <algorithm>
+#include "utils.h"
 
 
 Predator::Predator() {
@@ -35,13 +36,14 @@ void Predator::move(const std::vector<School>& schools) {
 }
 
 void Predator::mill() {
+    avoidTank(s,v,a);
+    v = v * (0.5 * cod_body_length / v.abs()); 
     for (int dimension = 0; dimension<dimensions; dimension++) {
-        float abs_v = v.abs();
-        float scale_factor = 1;
-        if (abs_v > 0.8 * cod_body_length) { scale_factor = 0.8 * cod_body_length / abs_v; }
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        e -= d_t / 60;
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
+        e += d_t / 60;
     }
 }
 
@@ -72,6 +74,8 @@ void Predator::attack_school(School& school) {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
     }
     abs_v = v.abs();
     if (abs_v < 1) { e -= d_t / 120; }

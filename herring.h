@@ -18,7 +18,6 @@ public:
     bool move(std::vector<Herring*> visible, Predator* predators);
 
 private:
-    void avoidTank();
     void school(Herring* other_herring);
     void normalise_and_move();
     bool check_herring_visible(Herring* to_check);
