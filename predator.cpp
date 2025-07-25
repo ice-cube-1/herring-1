@@ -4,6 +4,7 @@
 #include "predator.h"
 #include "herring.h"
 #include <iostream>
+#include <algorithm>
 
 
 Predator::Predator() {
@@ -12,6 +13,7 @@ Predator::Predator() {
         v.arr[i] = (rand() % 10 - 5) / 5.0f; 
         a.arr[i] = 0;
     }
+    e = 1;
 }
 
 int Predator::color() {
@@ -23,13 +25,26 @@ void Predator::move(const std::vector<School>& schools) {
     float dist = std::pow(2,31)-1;
     for (const School& school: schools) {
         float check_dist = (school.average_s() - s).abs();
-        if (dist > check_dist && school.herring.size() > 4) {
+        if (dist > check_dist) {
             dist = check_dist;
             chosen_school = school;
         }
     }
-    attack_school(chosen_school);
+    if (dist > fov_cod) { mill(); }
+    else { attack_school(chosen_school); }
 }
+
+void Predator::mill() {
+    for (int dimension = 0; dimension<dimensions; dimension++) {
+        float abs_v = v.abs();
+        float scale_factor = 1;
+        if (abs_v > 0.8 * cod_body_length) { scale_factor = 0.8 * cod_body_length / abs_v; }
+        float dx = distribution(generator)*sigma + v.arr[dimension];
+        s.arr[dimension] += dx*d_t;
+        e -= d_t / 60;
+    }
+}
+
 void Predator::attack_school(School& school) {
     /* STRATEGY 1 - GO FOR CENTRE OF SCHOOL */
     /* Vec3 s_c = school.average_s();
@@ -50,15 +65,15 @@ void Predator::attack_school(School& school) {
     }
     v = v+a*d_t;
     float abs_v = v.abs();
+    float max_v = std::min(5.8f, 1+e/(school.average_s().abs()))*cod_body_length;
     float scale_factor = 1;
-    if (abs_v > max_v_cod) {
-        scale_factor = max_v_cod / abs_v;
-    } else if (abs_v < min_v_cod) {
-        scale_factor = min_v_cod / abs_v;
-    }
+    if (abs_v > max_v) { scale_factor = max_v / abs_v; }
     v = v * scale_factor;
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
     }
+    abs_v = v.abs();
+    if (abs_v < 1) { e -= d_t / 120; }
+    else { e += (1-std::pow(53,(abs_v-1)/2))/3120; }
 }

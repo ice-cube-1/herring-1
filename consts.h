@@ -6,7 +6,7 @@
 constexpr double d_t = 0.1;
 
 constexpr int herringCount = 150;
-constexpr double sigma = 0;
+constexpr double sigma = 0.2;
 constexpr double alpha = 0.05;
 constexpr double beta = 0.1;
 constexpr double gamma = 1;
@@ -28,6 +28,7 @@ constexpr double cos_fov = -0.86602540378;  // cos(150 degrees)
 
 const double r_p = std::pow(r, p);
 const double r_q = std::pow(r, q);
+const float epsilon = 1e-6f;
 
 extern std::default_random_engine generator;
 extern std::normal_distribution<double> distribution;
@@ -38,11 +39,11 @@ const double theta_1 = 1.5;
 const double delta = 1;
 
 // PREDATORS
-const int predator_count = 5;
+const int predator_count = 3;
+const float fov_cod = 4;
+const float cod_body_length = 0.38;
 const double r_2 = 3;
 const double theta_2 = 2;
 const double gamma_1 = 0.2;
 const double gamma_2 = 0.1;
-const double max_v_cod = 0.2;
-const double min_v_cod = 0.04;
 const double max_a_cod = 0.6;

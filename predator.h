@@ -11,11 +11,13 @@ class Predator {
     Vec3 s;
     Vec3 v;
     Vec3 a;
+    float e;
     Predator();
     int color();
     void move(const std::vector<School>& schools);
     private:
     void attack_school(School& school);
+    void mill();
 };
 
 #endif
