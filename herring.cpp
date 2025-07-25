@@ -41,9 +41,9 @@ bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
 }
 
 void Herring::school(Herring* other_herring) {
-    const float dist_eps = epsilon;
     float abs_distance = (other_herring->s - s).abs();
-    abs_distance = std::max(abs_distance, dist_eps);
+    if (abs_distance > vision_range_herring) return;
+    abs_distance = std::max(abs_distance, epsilon);
     float p_term = r_p / std::pow(abs_distance, p);
     float q_term = r_q / std::pow(abs_distance, q);
     float scalar_s = p_term - q_term;
@@ -88,5 +88,5 @@ void Herring::normalise_and_move() {
 bool Herring::check_herring_visible(Herring* to_check) {
     Vec3 difference = to_check->s - s;
     float cos_theta = v.dot_product(difference) / (difference.abs() * v.abs());
-    return cos_theta > cos_fov && to_check != this;
+    return cos_theta > cos_fov && to_check != this && difference.abs() < vision_range_herring;
 }

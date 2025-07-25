@@ -22,6 +22,7 @@ constexpr double min_v = 0.03;
 constexpr double tank_size = 15.0;
 constexpr int cell_count = 10;
 constexpr double cell_width = tank_size / cell_count;
+constexpr double vision_range_herring = 5;
 
 constexpr int dimensions = 3;
 constexpr double cos_fov = -0.86602540378;  // cos(150 degrees)
@@ -40,10 +41,11 @@ const double delta = 1;
 
 // PREDATORS
 const int predator_count = 3;
-const float fov_cod = 4;
+const float vision_range_cod = 15;
 const float cod_body_length = 0.38;
 const double r_2 = 3;
 const double theta_2 = 2;
 const double gamma_1 = 0.2;
 const double gamma_2 = 0.1;
 const double max_a_cod = 0.6;
+const double k = 0.5;

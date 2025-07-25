@@ -126,7 +126,6 @@ int main() {
                 }
             }
         }
-        std::cout<<t<<"\n";
         window.display();
     }
 }
