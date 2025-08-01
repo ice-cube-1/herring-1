@@ -18,7 +18,7 @@ Predator::Predator() {
 }
 
 int Predator::color() {
-    return 240-s.z()*10;
+    return 240-s.y()*10;
 }
 
 void Predator::move(const std::vector<School>& schools) {
@@ -48,6 +48,7 @@ void Predator::mill() {
         if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
         e += d_t / 60;
     }
+    avoid_floor_hard(s,v);
 }
 
 void Predator::attack_school(School& school) {

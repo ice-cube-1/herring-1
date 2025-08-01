@@ -12,6 +12,8 @@ public:
     Vec3 operator+(const Vec3&) const;
     Vec3 operator-(const Vec3&) const;
     Vec3 operator*(float) const;
+    bool operator==(const Vec3&) const;
+    bool operator!=(const Vec3&) const;
     float abs();
     float dot_product(const Vec3&) const;
 };

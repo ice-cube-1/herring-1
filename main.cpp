@@ -13,14 +13,13 @@
 sf::CircleShape drawHerring(Herring* herring) {
     sf::CircleShape circle(4.f);
     circle.setFillColor(sf::Color{0, static_cast<sf::Uint8>(herring->color()), 255});
-    circle.setPosition(herring->s.x()*40+100, herring->s.y()*40+100);
+    circle.setPosition(herring->s.x()*40+100, herring->s.z()*40+100);
     return circle;
 }
 
 std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
 std::vector<School> schools;
 Herring herring_lst[herringCount];
-
 
 bool check_cell_in_school(std::array<int, 3> to_check) {
     for (School school: schools) {
@@ -80,6 +79,7 @@ int main() {
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
     }
+    init_planes();
     int alive = herringCount;
     sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
     for (int t = 0; t<36000; t++) {

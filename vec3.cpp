@@ -21,6 +21,14 @@ Vec3 Vec3::operator*(float scalar) const {
     return Vec3(x() * scalar, y() * scalar, z() * scalar);
 }
 
+bool Vec3::operator==(const Vec3& other) const {
+    return x() == other.x() && y() == other.y() && z() == other.z();
+}
+
+bool Vec3::operator!=(const Vec3& other) const {
+    return !(*this == other);
+}
+
 float Vec3::abs() {
     return std::sqrt(x()*x() + y()*y() + z()*z());
 }

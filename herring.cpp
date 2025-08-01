@@ -10,19 +10,17 @@
 
 Herring::Herring () { 
     for (int i = 0; i<dimensions; i++) {
-        s.arr[i] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/15));
+        s.arr[i] = 5.0f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) / (10.0f));
         v.arr[i] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
         a.arr[i] = 0;
     }
 }
 int Herring::color() {
-    return 240-s.z()*10;
+    return 240-s.y()*10;
 }
 void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]) {
-    int ix = std::min(static_cast<int>(s.x() / cell_width), cell_count - 1);
-    int iy = std::min(static_cast<int>(s.y() / cell_width), cell_count - 1);
-    int iz = std::min(static_cast<int>(s.z() / cell_width), cell_count - 1);
-    cells[ix][iy][iz].push_back(this);
+    std::array<int, 3> cell = get_cell(s);
+    cells[cell[0]][cell[1]][cell[2]].push_back(this);
 }
 
 bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
@@ -83,6 +81,7 @@ void Herring::normalise_and_move() {
         if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
         if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
     }
+    avoid_floor_hard(s,v);
 }
 
 bool Herring::check_herring_visible(Herring* to_check) {
