@@ -45,7 +45,7 @@ void Herring::school(Herring* other_herring) {
     abs_distance = std::max(abs_distance, epsilon);
     float p_term = r_p / std::pow(abs_distance, p);
     float q_term = r_q / std::pow(abs_distance, q);
-    float scalar_s = p_term - q_term;
+    float scalar_s = q_term - p_term;
     float scalar_v = p_term + q_term;
     Vec3 v_vec = v - other_herring->v;
     Vec3 s_vec = s - other_herring->s;

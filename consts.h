@@ -12,8 +12,8 @@ constexpr double beta = 0.1;
 constexpr double gamma = 1;
 
 constexpr double r = 0.9;
-constexpr double p = 2.5;
-constexpr double q = 1.5;
+constexpr double p = 1.5;
+constexpr double q = 2.5;
 
 constexpr double max_dv = 1.5;
 constexpr double max_v = 0.6;
