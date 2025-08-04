@@ -83,7 +83,7 @@ void Predator::attack_school(School& school) {
     }
     v = v+a*d_t;
     float abs_v = v.abs();
-    float max_v = std::min(5.8f, 1+e/(dist))*cod_body_length;
+    float max_v = std::clamp(1+e/(dist), 1.0f, 5.8f)*cod_body_length;
     float scale_factor = 1;
     if (abs_v > max_v) { scale_factor = max_v / abs_v; }
     v = v * scale_factor;

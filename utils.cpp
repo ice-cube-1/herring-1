@@ -15,6 +15,7 @@ Plane::Plane() {}
 Plane::Plane(Vec3 min, Vec3 max, int d) { min_values = min; max_values = max; dimension = d; }
 
 float Plane::distance_to_intersection(Vec3 s, Vec3 v) {
+    if (abs(v.arr[dimension]) <epsilon) v.arr[dimension] = epsilon;
     if ((v.arr[dimension] > 0 && s.arr[dimension] > min_values.arr[dimension]) ||
         (v.arr[dimension] < 0 && s.arr[dimension] < min_values.arr[dimension]))
         return -1;
@@ -47,7 +48,7 @@ float heights[cell_count][cell_count];
 void init_planes() {
     for (int i = 0; i<cell_count; i++) {
         for (int j = 0; j<cell_count; j++) {
-            heights[i][j] = std::abs(distribution(generator))*3.0f;
+            heights[i][j] = std::abs(distribution(generator))*0.0f;
             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3(i*cell_width, (j+1)*cell_width, heights[i][j]),0));
             planes.push_back(Plane(Vec3((i+1)*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, j*cell_width, heights[i][j]),1));

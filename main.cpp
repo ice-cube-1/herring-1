@@ -9,6 +9,7 @@
 #include "school.h"
 #include "predator.h"
 #include "utils.h"
+#include <cmath>
 
 sf::CircleShape drawHerring(Herring* herring) {
     sf::CircleShape circle(4.f);
@@ -73,7 +74,6 @@ sf::CircleShape drawPredator(Predator predator) {
     circle.setPosition(predator.s.x()*40+100, predator.s.z()*40+100);
     return circle;
 }
-
 Predator predators[predator_count];
 int main() {
     for (int i = 0; i<herringCount; i++) {
@@ -107,20 +107,18 @@ int main() {
                         }
                     }
 
-                    std::vector<Herring*> current_herringes = all_herring[i][j][k];
-                    for (Herring* herring : current_herringes) {
+                    std::vector<Herring*> current_herrings = all_herring[i][j][k];
+                    for (Herring* herring : current_herrings) {
                         if (!herring->move(herring_nearby, predators)) {
                             remove_unordered(all_herring[i][j][k], herring);
                             alive -= 1;
                             std::cout << alive << "\n";
                         } else {
                             window.draw(drawHerring(herring));
-                            if (static_cast<int>(herring->s.x() / cell_width) != i ||
-                                static_cast<int>(herring->s.y() / cell_width) != j ||
-                                static_cast<int>(herring->s.z() / cell_width) != k) {
+                            if (get_cell(herring->s)!=std::array{i,j,k}) {
                                 remove_unordered(all_herring[i][j][k], herring);
                                 herring->assign_cell(all_herring);
-                        }
+                            }
                         }
                     }
                 }
