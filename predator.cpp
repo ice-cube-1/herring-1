@@ -44,8 +44,8 @@ void Predator::mill() {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
-        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
         e += d_t / 60;
     }
     avoid_floor_hard(s,v);
@@ -90,8 +90,8 @@ void Predator::attack_school(School& school) {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
-        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
     }
     abs_v = v.abs();
     if (abs_v < 1) { e -= d_t / 120; }

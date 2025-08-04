@@ -1,3 +1,4 @@
+#include <string>
 #ifndef VEC3_H
 #define VEC3_H
 
@@ -9,6 +10,7 @@ public:
     float x() const;
     float y() const;
     float z() const;
+    std::string to_string() const;
     Vec3 operator+(const Vec3&) const;
     Vec3 operator-(const Vec3&) const;
     Vec3 operator*(float) const;

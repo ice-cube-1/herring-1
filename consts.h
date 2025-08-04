@@ -20,7 +20,7 @@ constexpr double max_v = 0.6;
 constexpr double min_v = 0.03;
 
 constexpr double tank_size = 15.0;
-constexpr int cell_count = 10;
+constexpr int cell_count = 5;
 constexpr double cell_width = tank_size / cell_count;
 constexpr double vision_range_herring = 5;
 

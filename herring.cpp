@@ -25,6 +25,7 @@ void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][ce
 
 bool Herring::move(std::vector<Herring*> visible, Predator* predators) {
     a = {0,0,0};
+    old_s = s;
     for (Herring* other_herring: visible) {
         if (check_herring_visible(other_herring)) {
             school(other_herring);
@@ -53,7 +54,7 @@ void Herring::school(Herring* other_herring) {
 
 bool Herring::avoid_predators(Predator predators[]) {
     for (int i = 0; i<predator_count; i++) {
-        if ((s-predators[i].s).abs() < 0.2) {
+        if ((old_s-predators[i].s).abs() < 0.2) {
             return false;
         }
         a = a + (s-predators[i].s) * (delta * std::pow(r_1, theta_1)/std::max(epsilon,static_cast<float>(std::pow((s-predators[i].s).abs(), theta_1))));
@@ -78,8 +79,8 @@ void Herring::normalise_and_move() {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        if (s.arr[dimension]<0) {s.arr[dimension] = 0; v.arr[dimension] *= -1; }
-        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
     }
     avoid_floor_hard(s,v);
 }

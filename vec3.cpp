@@ -1,5 +1,6 @@
 #include <cmath>
 #include "vec3.h"
+#include <string>
 
 Vec3::Vec3() : arr{0, 0, 0} {}
 
@@ -35,4 +36,8 @@ float Vec3::abs() {
 
 float Vec3::dot_product(const Vec3& other) const {
     return x() * other.x() + y() * other.y() + z() * other.z();
+}
+
+std::string Vec3::to_string() const {
+    return "X: " + std::to_string(x()) + ", Y: " + std::to_string(y()) + ", Z: " + std::to_string(z());
 }

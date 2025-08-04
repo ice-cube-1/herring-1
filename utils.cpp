@@ -48,7 +48,12 @@ void init_planes() {
     for (int i = 0; i<cell_count; i++) {
         for (int j = 0; j<cell_count; j++) {
             heights[i][j] = std::abs(distribution(generator))*3.0f;
-            std::cout<<heights[i][j];
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3(i*cell_width, (j+1)*cell_width, heights[i][j]),0));
+            planes.push_back(Plane(Vec3((i+1)*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, j*cell_width, heights[i][j]),1));
+            planes.push_back(Plane(Vec3(i*cell_width,(j+1)*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),1));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, 0),0));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,heights[i][j]),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
         }
     }
 }
@@ -58,20 +63,21 @@ void avoid_floor_hard(Vec3& s, Vec3& v) {
     std::array<int, 3> current_cell = initial_cell;
     Vec3 current_position = s;
     int count = 0;
-    while (heights[current_cell[0]][current_cell[1]] > current_position.z() && count < 15) {
-        count ++;
-        bool out=false;
-        for (float val : current_cell) {
-            if (val < 0 || val >= cell_count) {
-                out=true;
+    bool out = false;
+    while (count < 15) {
+        for (int val : s.arr) {
+            if (val < 0 || val >= tank_size) {
+                out = true;
+                break;
             }
         }
         if (out) break;
-        current_position = current_position - (v*0.1f*d_t);
+        if (heights[current_cell[0]][current_cell[1]] <= current_position.z()) break;
+        current_position = current_position - (v * 0.1f * d_t);
         current_cell = get_cell(current_position);
-        count ++;
+        count++;
     }
-    if (current_position != s) {
+    if (current_position != s && !out) {
         s = current_position;
         if (initial_cell[0] != current_cell[0]) {
             v.arr[0] = -v.arr[0];
@@ -80,18 +86,17 @@ void avoid_floor_hard(Vec3& s, Vec3& v) {
         } else {
             v.arr[2] = -v.arr[2];
         }
-        s = current_position;
-    } else if (count != 0) {
-        s.arr[2] = heights[initial_cell[0]][initial_cell[1]];
+    } else if (count != 0 || out) {
+        s.arr[2] = heights[initial_cell[0]][initial_cell[1]]+epsilon;
         v.arr[2] = abs(v.arr[2]);
     }
 }
 
 std::array<int, 3> get_cell(Vec3 s) {
-    return std::array{
-        std::min(static_cast<int>(s.x() / cell_width), cell_count - 1),
-        std::min(static_cast<int>(s.y() / cell_width), cell_count - 1),
-        std::min(static_cast<int>(s.z() / cell_width), cell_count - 1)
+    return std::array<int, 3>{
+        std::clamp(static_cast<int>(s.x() / cell_width), 0, cell_count - 1),
+        std::clamp(static_cast<int>(s.y() / cell_width), 0, cell_count - 1),
+        std::clamp(static_cast<int>(s.z() / cell_width), 0, cell_count - 1)
     };
 }
 

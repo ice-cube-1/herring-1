@@ -18,6 +18,7 @@ public:
     bool move(std::vector<Herring*> visible, Predator* predators);
 
 private:
+    Vec3 old_s;
     void school(Herring* other_herring);
     void normalise_and_move();
     bool check_herring_visible(Herring* to_check);

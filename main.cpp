@@ -70,7 +70,7 @@ void find_schools() {
 sf::CircleShape drawPredator(Predator predator) {
     sf::CircleShape circle(6.f);
     circle.setFillColor(sf::Color{255,static_cast<sf::Uint8>(predator.color()),0});
-    circle.setPosition(predator.s.x()*40+100, predator.s.y()*40+100);
+    circle.setPosition(predator.s.x()*40+100, predator.s.z()*40+100);
     return circle;
 }
 
@@ -82,7 +82,7 @@ int main() {
     init_planes();
     int alive = herringCount;
     sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    for (int t = 0; t<36000; t++) {
+    for (int t = 0; t<60*60*10; t++) {
         window.clear(sf::Color::White);
         find_schools();
         for (int i = 0; i<predator_count; i++) {
