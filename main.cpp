@@ -11,6 +11,7 @@
 #include "utils.h"
 #include <cmath>
 #include <algorithm>
+#include <fstream>
 
 // sf::CircleShape drawHerring(Herring* herring) {
 //     sf::CircleShape circle(4.f);
@@ -180,6 +181,9 @@ double objective(const std::array<double,dim>& x) {
     print_arr(x);
     set_params(x);
     double val = run_sim();
+    std::ofstream file("output.csv", std::ios::app);
+    file<<x[0]<<","<<x[1]<<","<<x[2]<<","<<x[3]<<","<<val<<"\n";
+    file.close();
     srand(time(nullptr));
     return val;
 }
@@ -206,11 +210,11 @@ class Sample {
 };
 
 int main() {
+    std::ofstream file("output.csv");
+    file<<"alpha,beta,gamma,delta,alive\n";
+    file.close();
     srand(time(nullptr));
     std::array<Sample,pop_size> population;
-    for (int i = 0; i < pop_size; i++) {
-        population[i] = Sample();
-    }
     for (int gen = 0; gen < max_gen; gen++) {
         for (int i = 0; i < pop_size; i++) {
             int a, b, c;
@@ -230,8 +234,8 @@ int main() {
             }
             double trial_fitness = objective(trial);
             if (trial_fitness > population[i].fitness) {
+                std::cout<<"New point! "<<trial_fitness<<" - "<<population[i].fitness<<"\n";
                 population[i] = Sample(trial, trial_fitness);
-                std::cout<<"New point!\n";
             }
         }
     }
