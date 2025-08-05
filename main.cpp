@@ -21,6 +21,26 @@ sf::CircleShape drawHerring(Herring* herring) {
 std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
 std::vector<School> schools;
 Herring herring_lst[herringCount];
+Predator predators[predator_count];
+
+void reset_globals() {
+    for (int i = 0; i < cell_count; ++i) {
+        for (int j = 0; j < cell_count; ++j) {
+            for (int k = 0; k < cell_count; ++k) {
+                all_herring[i][j][k].clear();
+            }
+        }
+    }
+    schools.clear();
+
+    for (int i = 0; i < herringCount; ++i) {
+        herring_lst[i] = Herring(); 
+    }
+
+    for (int i = 0; i < predator_count; ++i) {
+        predators[i] = Predator();
+    }
+}
 
 bool check_cell_in_school(std::array<int, 3> to_check) {
     for (School school: schools) {
@@ -74,20 +94,23 @@ sf::CircleShape drawPredator(Predator predator) {
     circle.setPosition(predator.s.x()*40+100, predator.s.z()*40+100);
     return circle;
 }
-Predator predators[predator_count];
-int main() {
+
+int run_sim() {
+    srand(0);
+    generator.seed(0);
+    reset_globals();
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
     }
     init_planes();
     int alive = herringCount;
-    sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    for (int t = 0; t<60*60*10; t++) {
-        window.clear(sf::Color::White);
+    //sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
+    for (int t = 0; t<5*60*10; t++) {
+        //window.clear(sf::Color::White);
         find_schools();
         for (int i = 0; i<predator_count; i++) {
             predators[i].move(schools);
-            window.draw(drawPredator(predators[i]));
+            //window.draw(drawPredator(predators[i]));
         }
         for (int i = 0; i<cell_count; i++) {
             for (int j = 0; j < cell_count; j++) {
@@ -112,9 +135,8 @@ int main() {
                         if (!herring->move(herring_nearby, predators)) {
                             remove_unordered(all_herring[i][j][k], herring);
                             alive -= 1;
-                            std::cout << alive << "\n";
                         } else {
-                            window.draw(drawHerring(herring));
+                            //window.draw(drawHerring(herring));
                             if (get_cell(herring->s)!=std::array{i,j,k}) {
                                 remove_unordered(all_herring[i][j][k], herring);
                                 herring->assign_cell(all_herring);
@@ -124,6 +146,15 @@ int main() {
                 }
             }
         }
-        window.display();
+        if (t%600==0) {std::cout<<t/600<<"\n";}
+        //window.display();
+    }
+    return alive;
+}
+
+int main() {
+    for (int i = 0; i<5; i++) {
+        int result = run_sim();
+        std::cout<< "Result:" << result << "\n";
     }
 }
