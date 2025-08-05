@@ -54,7 +54,7 @@ void Herring::school(Herring* other_herring) {
 
 bool Herring::avoid_predators(Predator predators[]) {
     for (int i = 0; i<predator_count; i++) {
-        if ((old_s-predators[i].s).abs() < 0.2) {
+        if ((old_s-predators[i].s).abs() < 0.1) {
             return false;
         }
         a = a + (s-predators[i].s) * (delta * std::pow(r_1, theta_1)/std::max(epsilon,static_cast<float>(std::pow((s-predators[i].s).abs(), theta_1))));

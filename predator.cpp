@@ -84,7 +84,7 @@ void Predator::attack_school(School& school) {
     }
     v = v+a*d_t;
     float abs_v = v.abs();
-    float max_v = std::clamp(1.0f+e/(school.average_s()-s).abs(), 0.5f, 5.8f)*cod_body_length;
+    float max_v = std::clamp(0.8f+e/(school.average_s()-s).abs(), 0.5f, 5.8f)*cod_body_length;
     float scale_factor = 1;
     if (abs_v > max_v) { scale_factor = max_v / abs_v; }
     v = v * scale_factor;
@@ -95,7 +95,7 @@ void Predator::attack_school(School& school) {
         if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
     }
     abs_v = v.abs();
-    if (abs_v <= 1.2*cod_body_length) { e += d_t / 120; }
-    else { e -= abs(1-std::pow(53,(abs_v/cod_body_length-1)/2.0f))/3120.0f; }
+    if (abs_v <= cod_body_length) { e += d_t / 120; }
+    else { e -= d_t*abs(1-std::pow(53,(abs_v/cod_body_length-1)/2.0f))/3120.0f; }
     if (e>1) { e=1; }
 }
