@@ -47,13 +47,13 @@ void Predator::mill() {
         if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; }
         if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
         e += d_t / 60;
+        if (e>1) e=1;
     }
     avoid_floor_hard(s,v);
 }
 
 void Predator::attack_school(School& school) {
     a = Vec3();
-    float dist = school.average_s().abs();
     /* STRATEGY I - GO FOR CENTRE OF SCHOOL */
     /* Vec3 s_c = school.average_s();
     Vec3 v_c = school.average_v();
@@ -69,6 +69,7 @@ void Predator::attack_school(School& school) {
     /* STRATEGY III  - NEAREST FISH IN SCHOOL ONLY */
     /* Herring* nearest_herring = school.herring[0];
     for (Herring* herring: school.herring) {
+        float dist = 1e6f;
         float check_dist = (herring->s - s).abs();
         if (dist > check_dist) {
             dist = check_dist;
@@ -83,7 +84,7 @@ void Predator::attack_school(School& school) {
     }
     v = v+a*d_t;
     float abs_v = v.abs();
-    float max_v = std::clamp(1+e/(dist), 1.0f, 5.8f)*cod_body_length;
+    float max_v = std::clamp(1.0f+e/(school.average_s()-s).abs(), 0.5f, 5.8f)*cod_body_length;
     float scale_factor = 1;
     if (abs_v > max_v) { scale_factor = max_v / abs_v; }
     v = v * scale_factor;
@@ -94,6 +95,7 @@ void Predator::attack_school(School& school) {
         if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
     }
     abs_v = v.abs();
-    if (abs_v < 1) { e -= d_t / 120; }
-    else { e += (1-std::pow(53,(abs_v-1)/2))/3120; }
+    if (abs_v <= 1.2*cod_body_length) { e += d_t / 120; }
+    else { e -= abs(1-std::pow(53,(abs_v/cod_body_length-1)/2.0f))/3120.0f; }
+    if (e>1) { e=1; }
 }
