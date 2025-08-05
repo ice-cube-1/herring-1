@@ -120,7 +120,7 @@ void avoidTank(const Vec3& s, const Vec3& v, Vec3& a) {
 
         float scalar_collision = r_p/std::pow(closest_plane_dist,p) + r_q/std::pow(closest_plane_dist,q);
         if (std::isfinite(scalar_collision)) {
-            a = a - (v - reflection_vector) * (gamma * scalar_collision);
+            a = a - (v - reflection_vector) * (gamma_0 * scalar_collision);
         }
     }
 }

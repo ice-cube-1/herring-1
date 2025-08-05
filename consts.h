@@ -2,14 +2,17 @@
 
 #include <cmath>
 #include <random>
+#include <array>
+
+void set_params(std::array<double,4> x);
 
 constexpr double d_t = 0.1;
 
 constexpr int herringCount = 300;
 constexpr double sigma = 0.2;
-constexpr double alpha = 0.05;
-constexpr double beta = 0.1;
-constexpr double gamma = 1;
+extern double alpha;
+extern double beta;
+extern double gamma_0;
 
 constexpr double r = 0.5;
 constexpr double p = 1.5;
@@ -37,7 +40,7 @@ extern std::normal_distribution<double> distribution;
 // PREY AVOIDANCE
 const double r_1 = 3;
 const double theta_1 = 1.5;
-const double delta = 1;
+extern double delta;
 
 // PREDATORS
 const int predator_count = 3;

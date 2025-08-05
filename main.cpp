@@ -1,5 +1,5 @@
 #include <iostream>
-#include <SFML/Graphics.hpp>
+//#include <SFML/Graphics.hpp>
 #include <windows.h>
 #include <random>
 #include <array>
@@ -10,13 +10,14 @@
 #include "predator.h"
 #include "utils.h"
 #include <cmath>
+#include <algorithm>
 
-sf::CircleShape drawHerring(Herring* herring) {
-    sf::CircleShape circle(4.f);
-    circle.setFillColor(sf::Color{0, static_cast<sf::Uint8>(herring->color()), 255});
-    circle.setPosition(herring->s.x()*40+100, herring->s.z()*40+100);
-    return circle;
-}
+// sf::CircleShape drawHerring(Herring* herring) {
+//     sf::CircleShape circle(4.f);
+//     circle.setFillColor(sf::Color{0, static_cast<sf::Uint8>(herring->color()), 255});
+//     circle.setPosition(herring->s.x()*40+100, herring->s.z()*40+100);
+//     return circle;
+// }
 
 std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
 std::vector<School> schools;
@@ -88,12 +89,12 @@ void find_schools() {
     }
 }
 
-sf::CircleShape drawPredator(Predator predator) {
-    sf::CircleShape circle(6.f);
-    circle.setFillColor(sf::Color{255,static_cast<sf::Uint8>(predator.color()),0});
-    circle.setPosition(predator.s.x()*40+100, predator.s.z()*40+100);
-    return circle;
-}
+// sf::CircleShape drawPredator(Predator predator) {
+//     sf::CircleShape circle(6.f);
+//     circle.setFillColor(sf::Color{255,static_cast<sf::Uint8>(predator.color()),0});
+//     circle.setPosition(predator.s.x()*40+100, predator.s.z()*40+100);
+//     return circle;
+// }
 
 int run_sim() {
     srand(0);
@@ -105,7 +106,7 @@ int run_sim() {
     init_planes();
     int alive = herringCount;
     //sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    for (int t = 0; t<5*60*10; t++) {
+    for (int t = 0; t<2*60*10; t++) {
         //window.clear(sf::Color::White);
         find_schools();
         for (int i = 0; i<predator_count; i++) {
@@ -146,15 +147,99 @@ int run_sim() {
                 }
             }
         }
-        if (t%600==0) {std::cout<<t/600<<"\n";}
         //window.display();
     }
+    std::cout<<"Alive:"<<alive<<"\n";
     return alive;
 }
 
-int main() {
-    for (int i = 0; i<5; i++) {
-        int result = run_sim();
-        std::cout<< "Result:" << result << "\n";
+constexpr int dim = 4;
+constexpr int pop_size = 10;
+int max_gen = 10;
+double F = 0.8;
+double CR = 0.9;
+
+class Param {
+    public:
+    std::string name;
+    float lower_bound;
+    float upper_bound;
+    Param(std::string n, float l, float u) {name = n, lower_bound = l; upper_bound = u; }
+};
+
+std::array<Param, dim> params = {Param("α",0.01, 2), Param("β",0.01,2), Param("γ",0.01,2), Param("δ",0.01,2)};
+
+void print_arr(const std::array<double,dim>&x) {
+    for (int i = 0; i<dim; i++) {
+        std::cout<<params[i].name<<": "<<x[i]<<"  ";
     }
+    std::cout<<"\n";
+}
+
+double objective(const std::array<double,dim>& x) {
+    print_arr(x);
+    set_params(x);
+    double val = run_sim();
+    srand(time(nullptr));
+    return val;
+}
+
+double rand_double(double min, double max) {
+    return min + (max - min) * (rand() / (double)RAND_MAX);
+}
+
+
+class Sample {
+    public:
+    std::array<double,dim> vals;
+    double fitness;
+    Sample() {
+        for (int i = 0; i<dim; i++) {
+            vals[i] = rand_double(params[i].lower_bound, params[i].upper_bound);
+        }
+        fitness = objective(vals);
+    }
+    Sample(std::array<double,dim> v, double f) {
+        vals = v;
+        fitness = f;
+    }
+};
+
+int main() {
+    srand(time(nullptr));
+    std::array<Sample,pop_size> population;
+    for (int i = 0; i < pop_size; i++) {
+        population[i] = Sample();
+    }
+    for (int gen = 0; gen < max_gen; gen++) {
+        for (int i = 0; i < pop_size; i++) {
+            int a, b, c;
+            do { a = rand() % pop_size; } while (a == i);
+            do { b = rand() % pop_size; } while (b == i || b == a);
+            do { c = rand() % pop_size; } while (c == i || c == a || c == b);
+            std::array<double,dim> trial;
+            int rand_j = rand() % dim;
+            for (int j = 0; j < dim; j++) {
+                if ((rand_double(0, 1) < CR) || (j == rand_j)) {
+                    trial[j] = population[a].vals[j] + F * (population[b].vals[j] - population[c].vals[j]);
+                    if (trial[j] < params[j].lower_bound) trial[j] = params[j].lower_bound;
+                    if (trial[j] > params[j].upper_bound) trial[j] = params[j].upper_bound;
+                } else {
+                    trial[j] = population[i].vals[j];
+                }
+            }
+            double trial_fitness = objective(trial);
+            if (trial_fitness > population[i].fitness) {
+                population[i] = Sample(trial, trial_fitness);
+                std::cout<<"New point!\n";
+            }
+        }
+    }
+    int best_index = 0;
+    for (int i = 1; i < pop_size; i++)
+        if (population[i].fitness < population[best_index].fitness)
+            best_index = i;
+
+    std::cout << "Best solution found:\n";
+    print_arr(population[best_index].vals);
 }
