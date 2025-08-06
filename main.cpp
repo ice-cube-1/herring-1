@@ -31,7 +31,7 @@ bool check_cell_in_school(std::array<int, 3> to_check, std::vector<School>& scho
     return false;
 }
 
-void flood_fill(std::array<int, 3> coords, School& current_school, std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& all_herring) {
+void flood_fill(std::array<int, 3> coords, School& current_school, std::array<std::array<std::array<std::vector<Herring*>, cell_count>, cell_count>, cell_count>& all_herring) {
     current_school.cells.push_back(coords);
     for (Herring* h : all_herring[coords[0]][coords[1]][coords[2]]) {
         current_school.herring.push_back(h);
@@ -49,7 +49,7 @@ void flood_fill(std::array<int, 3> coords, School& current_school, std::array<st
     }
 }
 
-void find_schools(std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& all_herring, std::vector<School>& schools) {
+void find_schools(std::array<std::array<std::array<std::vector<Herring*>, cell_count>, cell_count>, cell_count>& all_herring, std::vector<School>& schools) {
     int size = schools.size();
     schools.clear();
     for (int i = 0; i<cell_count; i++) {
@@ -73,19 +73,16 @@ void find_schools(std::array<std::array<std::array<std::vector<Herring*>, 10>, 1
 //     return circle;
 // }
 
-int run_sim() {
-    int total = 0;
-    for (int seed = 0; seed < 5; seed ++) {
+int run_sim(int seed) {
     srand(seed);
     generator.seed(seed);
-    std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10> all_herring;
+    std::array<std::array<std::array<std::vector<Herring*>, cell_count>, cell_count>, cell_count> all_herring;
     std::vector<School> schools;
     Herring herring_lst[herringCount];
     Predator predators[predator_count];
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
     }
-    init_planes();
     int alive = herringCount;
     //sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
     for (int t = 0; t<3*60*10; t++) {
@@ -130,12 +127,9 @@ int run_sim() {
             }
         }
         //window.display();
-    }
+    }    
     std::cout<<"Alive:"<<alive<<"\n";
-    total+=alive;
-    }
-    std::cout<<"Total:"<<total<<"\n";
-    return total;
+    return alive;
 }
 
 constexpr int dim = 4;
@@ -164,7 +158,7 @@ void print_arr(const std::array<double,dim>&x) {
 double objective(const std::array<double,dim>& x) {
     print_arr(x);
     set_params(x);
-    double val = run_sim();
+    double val = run_sim(5);
     std::ofstream file("output.csv", std::ios::app);
     file<<x[0]<<","<<x[1]<<","<<x[2]<<","<<x[3]<<","<<val<<"\n";
     file.close();
@@ -194,6 +188,7 @@ class Sample {
 };
 
 int main() {
+    init_planes();
     std::ofstream file("output.csv");
     file<<"alpha,beta,gamma,delta,alive\n";
     file.close();
