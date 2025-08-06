@@ -18,7 +18,7 @@ Herring::Herring () {
 int Herring::color() {
     return 240-s.y()*10;
 }
-void Herring::assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]) {
+void Herring::assign_cell(std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& cells) {
     std::array<int, 3> cell = get_cell(s);
     cells[cell[0]][cell[1]][cell[2]].push_back(this);
 }

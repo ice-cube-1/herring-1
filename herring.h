@@ -14,7 +14,7 @@ public:
     Vec3 a;
     Herring();
     int color();
-    void assign_cell(std::vector<Herring*> cells[cell_count][cell_count][cell_count]);
+    void assign_cell(std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& cells);
     bool move(std::vector<Herring*> visible, Predator* predators);
 
 private:

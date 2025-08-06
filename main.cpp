@@ -20,31 +20,7 @@
 //     return circle;
 // }
 
-std::vector<Herring*> all_herring[cell_count][cell_count][cell_count];
-std::vector<School> schools;
-Herring herring_lst[herringCount];
-Predator predators[predator_count];
-
-void reset_globals() {
-    for (int i = 0; i < cell_count; ++i) {
-        for (int j = 0; j < cell_count; ++j) {
-            for (int k = 0; k < cell_count; ++k) {
-                all_herring[i][j][k].clear();
-            }
-        }
-    }
-    schools.clear();
-
-    for (int i = 0; i < herringCount; ++i) {
-        herring_lst[i] = Herring(); 
-    }
-
-    for (int i = 0; i < predator_count; ++i) {
-        predators[i] = Predator();
-    }
-}
-
-bool check_cell_in_school(std::array<int, 3> to_check) {
+bool check_cell_in_school(std::array<int, 3> to_check, std::vector<School>& schools) {
     for (School school: schools) {
         for (std::array<int, 3> cell: school.cells) {
             if (cell == to_check) {
@@ -55,7 +31,7 @@ bool check_cell_in_school(std::array<int, 3> to_check) {
     return false;
 }
 
-void flood_fill(std::array<int, 3> coords, School& current_school) {
+void flood_fill(std::array<int, 3> coords, School& current_school, std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& all_herring) {
     current_school.cells.push_back(coords);
     for (Herring* h : all_herring[coords[0]][coords[1]][coords[2]]) {
         current_school.herring.push_back(h);
@@ -66,23 +42,23 @@ void flood_fill(std::array<int, 3> coords, School& current_school) {
         if (to_check[0] >= 0 && to_check[0] < cell_count && to_check[1] >= 0 && to_check[1] < cell_count && to_check[2] >= 0 && to_check[2] < cell_count) {
             if (std::find(current_school.cells.begin(), current_school.cells.end(), to_check) == current_school.cells.end()) {
                 if (all_herring[to_check[0]][to_check[1]][to_check[2]].size() != 0) {
-                    flood_fill((std::array<int,3>){to_check}, current_school);
+                    flood_fill((std::array<int,3>){to_check}, current_school, all_herring);
                 }
             }
         }
     }
 }
 
-void find_schools() {
+void find_schools(std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& all_herring, std::vector<School>& schools) {
     int size = schools.size();
     schools.clear();
     for (int i = 0; i<cell_count; i++) {
         for (int j = 0; j<cell_count; j++) {
             for (int k = 0; k<cell_count; k++) {
                 std::array<int,3> coords = {i,j,k};
-                if (!check_cell_in_school(coords) && all_herring[i][j][k].size() > 0) {
+                if (!check_cell_in_school(coords, schools) && all_herring[i][j][k].size() > 0) {
                     School current_school;
-                    flood_fill(coords, current_school);
+                    flood_fill(coords, current_school, all_herring);
                     schools.push_back(std::move(current_school));
                 }
             }
@@ -98,18 +74,23 @@ void find_schools() {
 // }
 
 int run_sim() {
-    srand(0);
-    generator.seed(0);
-    reset_globals();
+    int total = 0;
+    for (int seed = 0; seed < 5; seed ++) {
+    srand(seed);
+    generator.seed(seed);
+    std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10> all_herring;
+    std::vector<School> schools;
+    Herring herring_lst[herringCount];
+    Predator predators[predator_count];
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].assign_cell(all_herring);
     }
     init_planes();
     int alive = herringCount;
     //sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    for (int t = 0; t<2*60*10; t++) {
+    for (int t = 0; t<3*60*10; t++) {
         //window.clear(sf::Color::White);
-        find_schools();
+        find_schools(all_herring, schools);
         for (int i = 0; i<predator_count; i++) {
             predators[i].move(schools);
             //window.draw(drawPredator(predators[i]));
@@ -151,14 +132,17 @@ int run_sim() {
         //window.display();
     }
     std::cout<<"Alive:"<<alive<<"\n";
-    return alive;
+    total+=alive;
+    }
+    std::cout<<"Total:"<<total<<"\n";
+    return total;
 }
 
 constexpr int dim = 4;
 constexpr int pop_size = 10;
-int max_gen = 10;
-double F = 0.8;
-double CR = 0.9;
+const int max_gen = 10;
+const double F = 0.8;
+const double CR = 0.9;
 
 class Param {
     public:
@@ -168,7 +152,7 @@ class Param {
     Param(std::string n, float l, float u) {name = n, lower_bound = l; upper_bound = u; }
 };
 
-std::array<Param, dim> params = {Param("α",0.01, 2), Param("β",0.01,2), Param("γ",0.01,2), Param("δ",0.01,2)};
+const std::array<Param, dim> params = {Param("α",0, 1.5), Param("β",0,2), Param("γ",0,4), Param("δ",1,2)};
 
 void print_arr(const std::array<double,dim>&x) {
     for (int i = 0; i<dim; i++) {
