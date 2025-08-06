@@ -5,7 +5,7 @@
 #include <array>
 
 void set_prey_params(std::array<double,4> x);
-void set_predator_params(std::array<double,4> x);
+void set_predator_params(std::array<double,3> x);
 
 constexpr double d_t = 0.1;
 
@@ -49,7 +49,7 @@ const float vision_range_cod = 15;
 const float cod_body_length = 0.38;
 const double r_2 = 3;
 const double theta_2 = 2;
-extern double gamma_1 = 0.2;
-extern double gamma_2 = 0.1;
+extern double gamma_1;
+extern double gamma_2;
 const double max_a_cod = 0.6;
-extern double k = 0.5;
+extern double k;

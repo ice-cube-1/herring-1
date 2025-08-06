@@ -9,6 +9,10 @@ double beta = 1.0;
 double gamma_0 = 1.0;
 double delta = 1.0;
 
+double gamma_1 = 0.1;
+double gamma_2 = 0.2;
+double k = 0;
+
 void set_prey_params(std::array<double,4> x) {
     alpha = x[0];
     beta = x[1];
