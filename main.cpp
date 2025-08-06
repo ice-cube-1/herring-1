@@ -160,7 +160,7 @@ double objective(const std::array<double,dim>& x) {
     print_arr(x);
     set_params(x);
     std::vector<std::future<int>> futures;
-    for (int i = 1; i <= 5; ++i) {
+    for (int i = 0; i < 16; i++) {
         futures.push_back(std::async(std::launch::async, run_sim, i));
     }
     int total_sum = 0;

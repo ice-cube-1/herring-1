@@ -6,8 +6,9 @@
             "command": "C:\\msys64\\ucrt64\\bin\\g++.exe",
             "args": [
                 "-fdiagnostics-color=always",
-                "-g",
                 "-O3",
+                "-flto",
+                "-DNDEBUG",
                 "main.cpp",
                 "vec3.cpp",
                 "school.cpp",
@@ -17,9 +18,6 @@
                 "consts.cpp",
                 "-IC:/msys64/mingw64/include", 
                 "-LC:/msys64/mingw64/lib",
-                "-lsfml-graphics",
-                "-lsfml-window",
-                "-lsfml-system",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe"
             ],
