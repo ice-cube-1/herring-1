@@ -12,6 +12,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <future>
 
 // sf::CircleShape drawHerring(Herring* herring) {
 //     sf::CircleShape circle(4.f);
@@ -158,12 +159,20 @@ void print_arr(const std::array<double,dim>&x) {
 double objective(const std::array<double,dim>& x) {
     print_arr(x);
     set_params(x);
-    double val = run_sim(5);
+    std::vector<std::future<int>> futures;
+    for (int i = 1; i <= 5; ++i) {
+        futures.push_back(std::async(std::launch::async, run_sim, i));
+    }
+    int total_sum = 0;
+    for (auto& fut : futures) {
+        total_sum += fut.get();
+    }
+    std::cout<<"Total: "<<total_sum<<"\n";
     std::ofstream file("output.csv", std::ios::app);
-    file<<x[0]<<","<<x[1]<<","<<x[2]<<","<<x[3]<<","<<val<<"\n";
+    file<<x[0]<<","<<x[1]<<","<<x[2]<<","<<x[3]<<","<<total_sum<<"\n";
     file.close();
     srand(time(nullptr));
-    return val;
+    return total_sum;
 }
 
 double rand_double(double min, double max) {
