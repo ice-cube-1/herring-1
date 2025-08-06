@@ -1,9 +1,6 @@
 #include "consts.h"
 #include <cmath>
 
-std::default_random_engine generator;
-std::normal_distribution<double> distribution(0, std::sqrt(d_t));
-
 double alpha = 1.0;
 double beta = 1.0;
 double gamma_0 = 1.0;

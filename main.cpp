@@ -76,13 +76,15 @@ void find_schools(std::array<std::array<std::array<std::vector<Herring*>, cell_c
 // }
 
 int run_sim(int seed) {
-    srand(seed);
+    std::default_random_engine generator;
     generator.seed(seed);
+    std::normal_distribution<double> distribution(0, std::sqrt(d_t));
     std::array<std::array<std::array<std::vector<Herring*>, cell_count>, cell_count>, cell_count> all_herring;
     std::vector<School> schools;
     Herring herring_lst[herringCount];
     Predator predators[predator_count];
     for (int i = 0; i<herringCount; i++) {
+        herring_lst[i].create(generator, distribution);
         herring_lst[i].assign_cell(all_herring);
     }
     int alive = herringCount;
@@ -165,7 +167,7 @@ double objective(const std::array<double,dim_prey>& prey_params, const std::arra
     set_prey_params(prey_params);
     set_predator_params(predator_params);
     std::vector<std::future<int>> futures;
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 16; i++) {
         futures.push_back(std::async(std::launch::async, run_sim, i));
     }
     int total_sum = 0;
@@ -177,7 +179,6 @@ double objective(const std::array<double,dim_prey>& prey_params, const std::arra
     file<<prey_params[0]<<","<<prey_params[1]<<","<<prey_params[2]<<","<<prey_params[3]<<","
     <<predator_params[0]<<","<<predator_params[1]<<","<<predator_params[2]<<","<<total_sum<<"\n";
     file.close();
-    srand(time(nullptr));
     return total_sum;
 }
 

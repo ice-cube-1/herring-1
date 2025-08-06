@@ -35,9 +35,6 @@ const double r_p = std::pow(r, p);
 const double r_q = std::pow(r, q);
 const float epsilon = 1e-6f;
 
-extern std::default_random_engine generator;
-extern std::normal_distribution<double> distribution;
-
 // PREY AVOIDANCE
 const double r_1 = 3;
 const double theta_1 = 1.5;

@@ -7,11 +7,15 @@
 #include <algorithm>
 #include "utils.h"
 
+Predator::Predator() {}
 
-Predator::Predator() {
+void Predator::create(std::default_random_engine& g, std::normal_distribution<double>& d) {
+    distribution = d;
+    generator = g;
     for (int i = 0; i<dimensions; i++) {
-        s.arr[i] = (rand()%800)/80.0f;
-        v.arr[i] = (rand() % 10 - 5) / 5.0f; 
+        std::uniform_real_distribution<float> dist(0.0f, 15.0f);
+        s.arr[i] = dist(g);
+        v.arr[i] = dist(g)/10; 
         a.arr[i] = 0;
     }
     e = 1;

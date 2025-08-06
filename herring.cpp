@@ -8,13 +8,19 @@
 #include "utils.h"
 
 
-Herring::Herring () { 
+Herring::Herring () { }
+
+void Herring::create(std::default_random_engine& g, std::normal_distribution<double>& d) {
+    generator = g;
+    distribution = d;
     for (int i = 0; i<dimensions; i++) {
-        s.arr[i] = 5.0f + static_cast<float>(rand()) / (static_cast<float>(RAND_MAX) / (10.0f));
-        v.arr[i] = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+        std::uniform_real_distribution<float> dist(0.0f, 15.0f);
+        s.arr[i] = dist(g);
+        v.arr[i] = dist(g)/100;
         a.arr[i] = 0;
     }
 }
+
 int Herring::color() {
     return 240-s.y()*10;
 }
