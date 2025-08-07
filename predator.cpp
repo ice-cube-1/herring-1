@@ -13,7 +13,7 @@ void Predator::create(std::default_random_engine& g, std::normal_distribution<do
     distribution = d;
     generator = g;
     for (int i = 0; i<dimensions; i++) {
-        std::uniform_real_distribution<float> dist(0.0f, 15.0f);
+        std::uniform_real_distribution<float> dist(0.0f, tank_size);
         s.arr[i] = dist(g);
         v.arr[i] = dist(g)/10; 
         a.arr[i] = 0;
@@ -48,8 +48,8 @@ void Predator::mill() {
     for (int dimension = 0; dimension<dimensions; dimension++) {
         float dx = distribution(generator)*sigma + v.arr[dimension];
         s.arr[dimension] += dx*d_t;
-        if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; }
-        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; }
+        if (s.arr[dimension]<0) {s.arr[dimension] = 0+epsilon; v.arr[dimension] *= -1; v=v*hit_wall_multiplier; }
+        if (s.arr[dimension]>tank_size) {s.arr[dimension] = tank_size-epsilon; v.arr[dimension] *= -1; v=v*hit_wall_multiplier; }
         e += d_t / 60;
         if (e>1) e=1;
     }

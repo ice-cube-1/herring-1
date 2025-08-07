@@ -15,7 +15,7 @@ public:
     Herring();
     void create(std::default_random_engine& generator, std::normal_distribution<double>& distribution);
     int color();
-    void assign_cell(std::array<std::array<std::array<std::vector<Herring*>, 10>, 10>, 10>& cells);
+    void assign_cell(std::array<std::array<std::array<std::vector<Herring*>, cell_count>, cell_count>, cell_count>& cells);
     bool move(std::vector<Herring*> visible, Predator* predators);
 
 private:

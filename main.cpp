@@ -83,13 +83,16 @@ int run_sim(int seed) {
     std::vector<School> schools;
     Herring herring_lst[herringCount];
     Predator predators[predator_count];
+    for (int i = 0; i<predator_count; i++) {
+        predators[i].create(generator, distribution);
+    }
     for (int i = 0; i<herringCount; i++) {
         herring_lst[i].create(generator, distribution);
         herring_lst[i].assign_cell(all_herring);
     }
     int alive = herringCount;
     //sf::RenderWindow window(sf::VideoMode({800, 800}), "My window");
-    for (int t = 0; t<3*60*10; t++) {
+    for (int t = 0; t<7*60*10; t++) {
         //window.clear(sf::Color::White);
         find_schools(all_herring, schools);
         for (int i = 0; i<predator_count; i++) {
@@ -139,9 +142,11 @@ int run_sim(int seed) {
 constexpr int dim_prey = 4;
 constexpr int dim_predator = 3;
 constexpr int pop_size = 10;
-const int max_gen = 10;
+const int max_gen = 30;
 const double F = 0.8;
 const double CR = 0.9;
+int seed_count = 16;
+int std_penalizer = 1;
 
 class Param {
     public:
@@ -152,34 +157,44 @@ class Param {
     Param(std::string n, float l, float u, float d) {name = n, lower_bound = l; upper_bound = u; default_value = d; }
 };
 
-std::array<Param, dim_prey> params_prey = {Param("α",0, 1.5, 0.8), Param("β",-3,3,-2.5), Param("γ",-1,4,0), Param("δ",0,2,1.5)};
-std::array<Param, dim_predator> params_predator = {Param("γ1",-3, 3, 0.1), Param("γ2",-3,3,0.2), Param("k",-1,1,0.5)};
+std::array<Param, dim_prey> params_prey = {Param("α",0, 3, 0.8), Param("β",0,3,1), Param("γ",0,4,0), Param("δ",0,3,1.5)};
+std::array<Param, dim_predator> params_predator = {Param("γ1",0, 2, 0.1), Param("γ2",0,2,0.2), Param("k",-1,1,0.5)};
 
-void print_arr(const std::array<double,dim_prey>&x) {
+void print_arr(const std::array<double,dim_prey>&x, const std::array<double,dim_predator>&y) {
     for (int i = 0; i<dim_prey; i++) {
         std::cout<<params_prey[i].name<<": "<<x[i]<<"  ";
+    }
+    for (int i = 0; i<dim_predator; i++) {
+        std::cout<<params_predator[i].name<<": "<<y[i]<<"  ";
     }
     std::cout<<"\n";
 }
 
-double objective(const std::array<double,dim_prey>& prey_params, const std::array<double,dim_predator>& predator_params, std::string filename) {
-    print_arr(prey_params);
+double objective(const std::array<double,dim_prey>& prey_params, const std::array<double,dim_predator>& predator_params, std::string filename,bool min) {
+    print_arr(prey_params, predator_params);
     set_prey_params(prey_params);
     set_predator_params(predator_params);
     std::vector<std::future<int>> futures;
-    for (int i = 0; i < 16; i++) {
+    std::vector<int> results;
+    for (int i = 0; i < seed_count; i++) {
         futures.push_back(std::async(std::launch::async, run_sim, i));
     }
-    int total_sum = 0;
     for (auto& fut : futures) {
-        total_sum += fut.get();
+        results.push_back(fut.get());
     }
-    std::cout<<"Total: "<<total_sum<<"\n";
+    int total_sum = std::accumulate(results.begin(), results.end(), 0);
+    double mean = static_cast<double>(total_sum) / seed_count;
+    double sq_sum = 0.0;
+    for (int num : results) {
+        sq_sum += std::pow(num - mean, 2);
+    }
+    double stddev = std::sqrt(sq_sum / seed_count);
     std::ofstream file(filename, std::ios::app);
     file<<prey_params[0]<<","<<prey_params[1]<<","<<prey_params[2]<<","<<prey_params[3]<<","
-    <<predator_params[0]<<","<<predator_params[1]<<","<<predator_params[2]<<","<<total_sum<<"\n";
+    <<predator_params[0]<<","<<predator_params[1]<<","<<predator_params[2]<<","<<total_sum<<","<<stddev<<"\n";
     file.close();
-    return total_sum;
+    if (min) return total_sum+stddev*std_penalizer;
+    return total_sum-stddev*std_penalizer;
 }
 
 double rand_double(double min, double max) {
@@ -203,7 +218,7 @@ class Sample {
 void optimise_prey(int iteration) {
     std::string filename = "prey_output_"+std::to_string(iteration)+".csv";
     std::ofstream file(filename);
-    file<<"alpha,beta,gamma,delta,gamma1,gamma2,k,alive\n";
+    file<<"alpha,beta,gamma,delta,gamma1,gamma2,k,alive,stddev\n";
     file.close();
     srand(time(nullptr));
     std::array<Sample,pop_size> population;
@@ -215,7 +230,7 @@ void optimise_prey(int iteration) {
         for (int i = 0; i<dim_prey; i++) {
             population[j].prey_vals[i] = rand_double(params_prey[i].lower_bound, params_prey[i].upper_bound);
         }
-        population[j].fitness = objective(population[j].prey_vals, predator_vals,filename);
+        population[j].fitness = objective(population[j].prey_vals, predator_vals,filename,false);
     }
 
     for (int gen = 0; gen < max_gen; gen++) {
@@ -235,7 +250,8 @@ void optimise_prey(int iteration) {
                     trial[j] = population[i].prey_vals[j];
                 }
             }
-            double trial_fitness = objective(trial, predator_vals, filename);
+            double trial_fitness = objective(trial, predator_vals, filename,false);
+            std::cout<<"Total: "<<trial_fitness<<"\n";
             if (trial_fitness > population[i].fitness) {
                 std::cout<<"New point! "<<trial_fitness<<" - "<<population[i].fitness<<"\n";
                 population[i] = Sample(trial, predator_vals, trial_fitness);
@@ -256,7 +272,7 @@ void optimise_prey(int iteration) {
 void optimise_predator(int iteration) {
     std::string filename = "predator_output_"+std::to_string(iteration)+".csv";
     std::ofstream file(filename);
-    file<<"alpha,beta,gamma,delta,gamma1,gamma2,k,alive\n";
+    file<<"alpha,beta,gamma,delta,gamma1,gamma2,k,alive,stddev\n";
     file.close();
     srand(time(nullptr));
     std::array<Sample,pop_size> population;
@@ -268,7 +284,7 @@ void optimise_predator(int iteration) {
         for (int i = 0; i<dim_predator; i++) {
             population[j].predator_vals[i] = rand_double(params_predator[i].lower_bound, params_predator[i].upper_bound);
         }
-        population[j].fitness = objective(prey_vals, population[j].predator_vals,filename);
+        population[j].fitness = objective(prey_vals, population[j].predator_vals,filename,true);
     }
 
     for (int gen = 0; gen < max_gen; gen++) {
@@ -288,7 +304,8 @@ void optimise_predator(int iteration) {
                     trial[j] = population[i].predator_vals[j];
                 }
             }
-            double trial_fitness = objective(prey_vals, trial, filename);
+            double trial_fitness = objective(prey_vals, trial, filename,true);
+            std::cout<<"Total: "<<trial_fitness<<"\n";
             if (trial_fitness < population[i].fitness) {
                 std::cout<<"New point! "<<trial_fitness<<" - "<<population[i].fitness<<"\n";
                 population[i] = Sample(prey_vals, trial, trial_fitness);

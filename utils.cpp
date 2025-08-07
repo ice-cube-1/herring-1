@@ -87,9 +87,11 @@ void avoid_floor_hard(Vec3& s, Vec3& v) {
         } else {
             v.arr[2] = -v.arr[2];
         }
+        v = v * hit_wall_multiplier;
     } else if (count != 0 || out) {
         s.arr[2] = heights[initial_cell[0]][initial_cell[1]]+epsilon;
         v.arr[2] = abs(v.arr[2]);
+        v = v * hit_wall_multiplier;
     }
 }
 

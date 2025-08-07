@@ -15,10 +15,10 @@ class Predator {
     Predator();
     int color();
     void move(const std::vector<School>& schools);
+    void create(std::default_random_engine& generator, std::normal_distribution<double>& distribution);
     private:
     void attack_school(School& school);
     void mill();
-    void create(std::default_random_engine& generator, std::normal_distribution<double>& distribution);
     std::default_random_engine generator;
     std::normal_distribution<double> distribution;
 };
