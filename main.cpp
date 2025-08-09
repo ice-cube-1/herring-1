@@ -141,8 +141,8 @@ int run_sim(int seed) {
 
 constexpr int dim_prey = 4;
 constexpr int dim_predator = 3;
-constexpr int pop_size = 12;
-const int max_gen = 12;
+constexpr int pop_size = 10;
+const int max_gen = 10;
 const double F = 0.8;
 const double CR = 0.9;
 int seed_count = 16;
@@ -322,34 +322,9 @@ void optimise_predator(int iteration) {
     }
 }
 
-// int main() {
-//     for (int i = 0; i<5; i++) {
-//         optimise_prey(i);    
-//         optimise_predator(i);
-//     }
-// }
-
 int main() {
-    std::array<double, dim_prey> prey_vals;
-    for (int i = 0; i<dim_prey; i++) {
-        prey_vals[i] = params_prey[i].default_value;
-    }
-    std::array<double, dim_predator> predator_vals;
-    for (int i = 0; i<dim_predator; i++) {
-        predator_vals[i] = params_predator[i].default_value;
-    }
-    for (int i = 0; i<dim_prey; i++) {
-        for (float j = 0; j<=10; j++) {
-            std::array<double, dim_prey> trial = prey_vals;
-            trial[i] = (params_prey[i].upper_bound-params_prey[i].lower_bound)/9.0f*j + params_prey[i].lower_bound;
-            objective(trial, predator_vals, "test_const_prey.csv",false);
-        }
-    }
-    for (int i = 0; i<dim_predator; i++) {
-        for (float j = params_predator[i].lower_bound; j<= params_predator[i].upper_bound; j+=(params_predator[i].upper_bound-params_predator[i].lower_bound)/9.0f) {
-            std::array<double, dim_predator> trial = predator_vals;
-            trial[i] = j;
-            objective(prey_vals, trial, "test_const_predator.csv",true);
-        }
+    for (int i = 0; i<5; i++) {
+        optimise_prey(i);    
+        optimise_predator(i);
     }
 }
