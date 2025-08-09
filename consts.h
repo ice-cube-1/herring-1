@@ -20,7 +20,7 @@ constexpr double p = 1.5;
 constexpr double q = 2.5;
 
 constexpr double max_dv = 1.5;
-constexpr double max_v = 0.6;
+constexpr double max_v = 1;
 constexpr double min_v = 0.03;
 
 constexpr double tank_size = 30.0;

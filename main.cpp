@@ -23,8 +23,8 @@
 // }
 
 bool check_cell_in_school(std::array<int, 3> to_check, std::vector<School>& schools) {
-    for (School school: schools) {
-        for (std::array<int, 3> cell: school.cells) {
+    for (School& school: schools) {
+        for (std::array<int, 3>& cell: school.cells) {
             if (cell == to_check) {
                 return true;
             }
@@ -157,8 +157,8 @@ class Param {
     Param(std::string n, float l, float u, float d) {name = n, lower_bound = l; upper_bound = u; default_value = d; }
 };
 
-std::array<Param, dim_prey> params_prey = {Param("α",-3, 3, 0.2), Param("β",-3,3,0.5), Param("γ",0,4,0.5), Param("δ",1e-12,1e-3,1e-6)};
-std::array<Param, dim_predator> params_predator = {Param("γ1",0, 3, 2), Param("γ2",0,3,0.5), Param("k",-1,1,0.5)};
+std::array<Param, dim_prey> params_prey = {Param("α",-3, 4, 0.2), Param("β",-3,4,0.5), Param("γ",0,5,0.5), Param("δ",epsilon,1,0.1)};
+std::array<Param, dim_predator> params_predator = {Param("γ1",0, 4, 2), Param("γ2",0,4,0.5), Param("k",-1,1,0.5)};
 
 void print_arr(const std::array<double,dim_prey>&x, const std::array<double,dim_predator>&y) {
     for (int i = 0; i<dim_prey; i++) {
