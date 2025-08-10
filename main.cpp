@@ -141,9 +141,9 @@ int run_sim(int seed) {
 
 constexpr int dim_prey = 4;
 constexpr int dim_predator = 3;
-constexpr int pop_size = 10;
-const int max_gen = 10;
-const double F = 0.8;
+constexpr int pop_size = 15;
+const int max_gen = 15;
+const double F = 0.7;
 const double CR = 0.9;
 int seed_count = 16;
 int std_penalizer = 0.5;
@@ -157,8 +157,8 @@ class Param {
     Param(std::string n, float l, float u, float d) {name = n, lower_bound = l; upper_bound = u; default_value = d; }
 };
 
-std::array<Param, dim_prey> params_prey = {Param("α",-3, 4, 0.2), Param("β",-3,4,0.5), Param("γ",0,5,0.5), Param("δ",epsilon,1,0.1)};
-std::array<Param, dim_predator> params_predator = {Param("γ1",0, 4, 2), Param("γ2",0,4,0.5), Param("k",-1,1,0.5)};
+std::array<Param, dim_prey> params_prey = {Param("α",-3, 6, 0.2), Param("β",-4,6,0.5), Param("γ",0,5,0.5), Param("δ",epsilon,0.01,0.001)};
+std::array<Param, dim_predator> params_predator = {Param("γ1",epsilon, 6, 2), Param("γ2",epsilon,6,0.5), Param("k",-1,1,0.5)};
 
 void print_arr(const std::array<double,dim_prey>&x, const std::array<double,dim_predator>&y) {
     for (int i = 0; i<dim_prey; i++) {
@@ -323,7 +323,7 @@ void optimise_predator(int iteration) {
 }
 
 int main() {
-    for (int i = 0; i<5; i++) {
+    for (int i = 0; i<15; i++) {
         optimise_prey(i);    
         optimise_predator(i);
     }
