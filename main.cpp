@@ -141,8 +141,8 @@ int run_sim(int seed) {
 
 constexpr int dim_prey = 4;
 constexpr int dim_predator = 3;
-constexpr int pop_size = 15;
-const int max_gen = 15;
+constexpr int pop_size = 10;
+const int max_gen = 30;
 const double F = 0.7;
 const double CR = 0.9;
 int seed_count = 16;
@@ -158,7 +158,7 @@ class Param {
     Param(std::string n, float l, float u, float d) {name = n, lower_bound = l; upper_bound = u; default_value = d; }
 };
 
-std::array<Param, dim_prey> params_prey = {Param("α",-3, 6, 0.2), Param("β",-4,6,0.5), Param("γ",0,5,0.5), Param("δ",epsilon,0.01,0.001)};
+std::array<Param, dim_prey> params_prey = {Param("α",-3, 6, 0.2), Param("β",-6,6,0.5), Param("γ",0,5,0.5), Param("δ",epsilon,0.001,0.0001)};
 std::array<Param, dim_predator> params_predator = {Param("γ1",epsilon, 6, 2), Param("γ2",epsilon,6,0.5), Param("k",-1,1,0.5)};
 
 void print_arr(const std::array<double,dim_prey>&x, const std::array<double,dim_predator>&y) {
@@ -208,19 +208,20 @@ class Sample {
     std::array<double, dim_prey> prey_vals;
     std::array<double, dim_predator> predator_vals;
     double fitness;
-    Sample() { fitness = -1; }
-    Sample(std::array<double, dim_prey> prey, std::array<double, dim_predator> predator, double f) {
+    int time;
+    Sample() { fitness = -1; time=0; }
+    Sample(std::array<double, dim_prey> prey, std::array<double, dim_predator> predator, double f, int t) {
         prey_vals = prey;
         predator_vals = predator;
         fitness = f;
+        time = t;
     }
 };
 
 void updateHoF(std::array<Sample,HoFcount>& hof, Sample sample, bool minimise) {
     int worst_idx = 0;
-    double worst_fitness = minimise ? -1e6:1e6;
     for (int i = 0; i<HoFcount; i++) {
-        if (hof[i].fitness==-1) {
+        if (hof[i].fitness==-1 || hof[i].time < sample.time - 5) {
             hof[i] = sample;
             return;
         }
@@ -243,6 +244,7 @@ int main() {
     std::array<Sample,pop_size> predator_population;
     std::array<Sample,pop_size> prey_population;
     std::array<double, dim_prey> prey_vals;
+    Sample new_sample;
     for (int i = 0; i<dim_prey; i++) {
         prey_vals[i] = params_prey[i].default_value;
     }
@@ -283,13 +285,13 @@ int main() {
             }
             double trial_fitness = 0;
             for (float k = 0; k<HoFcount;k++) {
-                trial_fitness += objective(preyHoF[k].prey_vals,trial,filename,true)/HoFcount;
+                trial_fitness += objective(preyHoF[k].prey_vals,trial,filename,true)/(float)HoFcount;
             }
             std::cout<<"Total: "<<trial_fitness<<"\n";
+            new_sample = Sample(prey_vals, trial, trial_fitness,gen);
+            updateHoF(predatorHoF, new_sample, true);
             if (trial_fitness < predator_population[i].fitness) {
                 std::cout<<"New point (predator)! "<<trial_fitness<<" - "<<predator_population[i].fitness<<"\n";
-                predator_population[i] = Sample(prey_vals, trial, trial_fitness);
-                updateHoF(predatorHoF, predator_population[i], true);
             }
 
 
@@ -309,14 +311,20 @@ int main() {
             }
             double trial_prey_fitness = 0;
             for (float k = 0; k<HoFcount;k++) {
-                trial_prey_fitness += objective(trial_prey, predatorHoF[k].predator_vals,filename,false)/HoFcount;
+                trial_prey_fitness += objective(trial_prey, predatorHoF[k].predator_vals,filename,false)/(float)HoFcount;
             }
             std::cout<<"Total: "<<trial_prey_fitness<<"\n";
-            if (trial_prey_fitness < prey_population[i].fitness) {
+            new_sample = Sample(trial_prey, predator_vals, trial_prey_fitness,gen);
+            updateHoF(preyHoF, new_sample, false);
+            if (trial_prey_fitness > prey_population[i].fitness) {
                 std::cout<<"New point (prey)! "<<trial_prey_fitness<<" - "<<prey_population[i].fitness<<"\n";
-                prey_population[i] = Sample(trial_prey, predator_vals, trial_prey_fitness);
-                updateHoF(preyHoF, prey_population[i], false);
+                prey_population[i] = new_sample;
             }
         }
+    }
+    for (int i = 0; i<HoFcount; i++) {
+        std::cout<<predatorHoF[i].fitness<<"\n";
+        std::cout<<preyHoF[i].fitness<<"\n";
+        print_arr(preyHoF[i].prey_vals, predatorHoF[i].predator_vals);
     }
 }
