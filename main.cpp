@@ -142,7 +142,7 @@ int run_sim(int seed) {
 constexpr int dim_prey = 4;
 constexpr int dim_predator = 3;
 constexpr int pop_size = 10;
-const int max_gen = 50;
+const int max_gen = 30;
 const double F = 0.7;
 const double CR = 0.9;
 int seed_count = 16;
@@ -158,7 +158,7 @@ class Param {
     Param(std::string n, float l, float u, float d) {name = n, lower_bound = l; upper_bound = u; default_value = d; }
 };
 
-std::array<Param, dim_prey> params_prey = {Param("α",-3, 3, 0.2), Param("β",-3,3,0.5), Param("γ",0,5,0.5), Param("δ",1e-8,0.0005,0.00001)};
+std::array<Param, dim_prey> params_prey = {Param("α",0.25, 3, 0.2), Param("β",0.25,3,0.5), Param("γ",0,5,0.5), Param("δ",1e-8,0.001,0.00001)};
 std::array<Param, dim_predator> params_predator = {Param("γ1",epsilon, 6, 2), Param("γ2",epsilon,6,0.5), Param("k",-1,1,0.5)};
 
 void print_arr(const std::array<double,dim_prey>&x, const std::array<double,dim_predator>&y) {
@@ -236,6 +236,9 @@ void updateHoF(std::array<Sample,HoFcount>& hof, Sample sample, bool minimise) {
 }
 
 int main() {
+    std::default_random_engine generator;
+    std::normal_distribution<double> distribution(0, std::sqrt(d_t));
+    init_planes(generator, distribution);
     std::string filename = "output.csv";
     std::ofstream file(filename);
     file<<"alpha,beta,gamma,delta,gamma1,gamma2,k,alive,stddev\n";

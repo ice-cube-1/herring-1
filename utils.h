@@ -8,7 +8,7 @@
 void remove_unordered(std::vector<Herring*>& vec, Herring* value);
 void avoidTank(const Vec3& s, const Vec3& v, Vec3& a);
 extern float heights[cell_count][cell_count];
-void init_planes();
+void init_planes(std::default_random_engine& generator, std::normal_distribution<double>& distribution);
 void avoid_floor_hard(Vec3& s, Vec3& v);
 std::array<int, 3> get_cell(Vec3 s);
 class Plane {

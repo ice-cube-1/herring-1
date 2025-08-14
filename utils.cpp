@@ -45,19 +45,19 @@ std::vector<Plane> planes =  {
 
 float heights[cell_count][cell_count];
 
-// void init_planes() {
-//     for (int i = 0; i<cell_count; i++) {
-//         for (int j = 0; j<cell_count; j++) {
-//             heights[i][j] = std::abs(distribution(generator))*0.0f;
-//             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3(i*cell_width, (j+1)*cell_width, heights[i][j]),0));
-//             planes.push_back(Plane(Vec3((i+1)*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
-//             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, j*cell_width, heights[i][j]),1));
-//             planes.push_back(Plane(Vec3(i*cell_width,(j+1)*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),1));
-//             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, 0),0));
-//             planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,heights[i][j]),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
-//         }
-//     }
-// }
+void init_planes(std::default_random_engine& generator, std::normal_distribution<double>& distribution) {
+    for (int i = 0; i<cell_count; i++) {
+        for (int j = 0; j<cell_count; j++) {
+           heights[i][j] = std::abs(distribution(generator))*15.0f;
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3(i*cell_width, (j+1)*cell_width, heights[i][j]),0));
+            planes.push_back(Plane(Vec3((i+1)*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, j*cell_width, heights[i][j]),1));
+            planes.push_back(Plane(Vec3(i*cell_width,(j+1)*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),1));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,0),Vec3((i+1)*cell_width, (j+1)*cell_width, 0),0));
+            planes.push_back(Plane(Vec3(i*cell_width,j*cell_width,heights[i][j]),Vec3((i+1)*cell_width, (j+1)*cell_width, heights[i][j]),0));
+        }
+    }
+}
 
 void avoid_floor_hard(Vec3& s, Vec3& v) {
     std::array<int, 3> initial_cell = get_cell(s);
