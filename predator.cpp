@@ -64,14 +64,14 @@ void Predator::attack_school(School& school) {
     a = ((s - s_c) + (v - v_c) * gamma_2) * -gamma_1;
     a = a * (std::pow(r_2, theta_2)/std::pow((s-s_c).abs(),theta_2)); */
     /* STRATEGY II - WEIGHTED TO NEARER FISH */
-    for (Herring* herring: school.herring) {
+    /* for (Herring* herring: school.herring) {
         Vec3 a_herring = ((s - herring->s) + (v - herring->v) * gamma_2) * -gamma_1;
         a_herring = a_herring * (std::pow(r_2, theta_2)/std::pow((s-herring->s).abs(), theta_2));
         a = a + a_herring;
     }
-    a = a * ((float)1/school.herring.size());
+    a = a * ((float)1/school.herring.size()); */
     /* STRATEGY III  - NEAREST FISH IN SCHOOL ONLY */
-    /* Herring* nearest_herring = school.herring[0];
+    Herring* nearest_herring = school.herring[0];
     for (Herring* herring: school.herring) {
         float dist = 1e6f;
         float check_dist = (herring->s - s).abs();
@@ -81,7 +81,7 @@ void Predator::attack_school(School& school) {
         }
     }
     a = ((s-nearest_herring->s)+(v-nearest_herring->v)*gamma_2) * -gamma_1;
-    a = a * (std::pow(r_2, theta_2)/std::pow((s-nearest_herring->s).abs(),theta_2)); */
+    a = a * (std::pow(r_2, theta_2)/std::pow((s-nearest_herring->s).abs(),theta_2));
     float abs_a = a.abs();
     if (abs_a > max_a_cod) {
         a = a * (max_a_cod / abs_a);
