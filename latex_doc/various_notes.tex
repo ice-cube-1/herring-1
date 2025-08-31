@@ -1,0 +1,247 @@
+\section{General}
+\subsection{Prior research / what's new}
+\begin{itemize}
+    \item SDE with schooling behaviour has been outlined quite a few times
+    \item Predator strategies I and II have been done, III is new
+    \item Obstacle avoidance has been done on principle before, with cubes and a rough floor is new interpretation
+    \item Energy costs / adaptive max velocity is new
+    \item Differential evolution is very well known - has been applied to some scenarios but predator/prey simulations adversarially
+    \item Herring-specific simulations have been done before but significantly simplified and with different aims - however relevant parameters have been lifted from these
+    \item Herring-cod interactions have not been simulated before, cod more generally have been simulated to a very limited extent
+    \item Cod were chosen due to their comparative simplicity compared to other predators like orca which hunt in groups on a large scale, also due to the high amount of biological data but low amount of simulations
+    \item Intends to compare cod performance depending on number of obstacles, and look at the emergent behaviour after the DE occurs and compare to known behaviour of herring
+\end{itemize}
+\subsection{Environment constants}
+\begin{itemize}
+    \item tank size = 15m
+    \item cell count = 10
+    \item time step = 0.1s
+    \item epsilon = 1e-6 (used to prevent divide by zero)
+\end{itemize}
+\subsection{Model limitations / assumptions}
+\begin{itemize}
+\item obstacles block movement and fish attempt to avoid them but they are still transparent in terms of seeing fish through them
+\item various epsilon use to prevent divide by zero
+\item obstacles are all cubes
+\item common avoid tank logic / params for predator and prey
+\item small tank + fish count, which are conditions that prefer cod
+\item Simulation only runs for a very short amount of time, cod do not pause to catch / eat fish (likely does not change the relative outcomes but will mean an abnormally high number of fish are eaten each time)
+\item cod only employ one of the three strategies, and have no memory
+\item cod mill, but do not have any attraction / repulsion to each other
+\item [add things when i remember them]
+\item prey are only affected by other fish within the surrounding cells, regardless of their vision
+\item predators have 360 degree field of view - in reality it's 330, so this is fine
+\item Herring do not have any food / spawning mechanics built in, only aim is to avoid predators
+\end{itemize}
+\subsection{Obstacles}
+\begin{itemize}
+\item cubes of cell count width from the base and height of a normal distribution * constant
+\item both avoid floor hard / soft, soft outlined below
+\item  hard: steps out and reverses direction that it bounced of, if for whatever reason this fails then just go to the top of the floor
+\end{itemize}
+\section{Prey modelling}
+Some equations from https://arxiv.org/pdf/1509.00063 \par
+Stochastic differential equation - means there's a normal distribution term multiplied by some factor \par
+Normal suvat equation for velocity + a stochastic term: \par
+\begin{equation}
+    dx_i(t) = v_idt +\sigma_i dw_i(t)
+\end{equation}
+Various equations to model different parts of fish behaviour:
+\begin{equation}
+        dv_i(t) =(S(t)+T(t) +U(t)+V(t)+N(t))dt
+\end{equation}
+\subsection{Prey attraction - distance}
+\begin{equation}
+    S(x_i)=- \alpha \sum_{\substack{j=1 \\ j \neq i}}^N \left( \frac{r^p}{\|x_i - x_j\|^p} - \frac{r^q}{\|x_i - x_j\|^q} \right)(x_i - x_j)
+\end{equation}
+\begin{itemize}
+    \item $\alpha$: Coefficient of attraction to nearby fish
+    \item $N$: Total number of fish
+    \item $r$: Optimal distance (m) for schooling
+    \item $p$: Extent of schooling attraction
+    \item $q$: force of schooling repulsion, $q > p$
+\end{itemize}
+\subsection{Prey attraction - velocity}
+\begin{equation}
+    T(x_i)= - \beta \sum_{\substack{j=1 \\ j \neq i}}^N \left( \frac{r^p}{\|x_i - x_j\|^p} + \frac{r^q}{\|x_i - x_j\|^q}\right)(v_i - v_j) 
+\end{equation}
+\begin{itemize}
+    \item $\beta$: Coefficient of attraction to the same alignment of nearby fish
+\end{itemize}
+\subsection{Obstacle avoidance}
+\begin{equation}
+    U(x_i,P)=-\gamma \left(\frac{r^p}{|s_i-P|^p}+\frac{r^q}{|s_i-P|^q}\right)(v_i - Rf(x_i, v_i, P))
+\end{equation}
+\begin{itemize}
+    \item $\gamma$ Coefficient of repulsion from the tank walls
+    \item $P$ Closest point on the nearest plane to $s_i$
+    \item $Rf(x_i,v_i, P)$ Reflection vector from the plane, equal to $v_i$ with the component in the dimension of the plane negated
+\end{itemize}
+\subsection{Predator avoidance}
+\begin{equation}
+    V(x_i,y) =-\delta \frac{R_1^{\theta_1}}{|x_i-y|^{\theta_1}}(x_i-y)
+\end{equation}
+\begin{enumerate}
+    \item $\delta$ Coefficient of predator avoidance
+    \item $R_1$ Threshold distance for prey to show avoidant behaviour, $R_1>r$
+    \item $\theta_1$ Coefficient of predator avoidance (geometric)
+\end{enumerate}
+\subsection{Normalise and move ($N(t)$)}
+\begin{enumerate}
+    \item Ensure $dv_i$ not $>$max
+    \item Clamp $dx_i$ between max / min
+    \item If have collided, move back and attempt to "bounce off" by negating relevant velocity component - if for some reason moving back doesn't work then just ensure still within bounds
+\end{enumerate}
+\subsection{Eaten}
+When the fish is within 0.1 (change?) meters of a cod, it is considered eaten. The alive counter decreases by one, and it is removed from the simulation.
+\subsection{Coefficients to change}
+
+\begin{table}
+    \centering
+    \begin{tabular}{clcc}
+         $\alpha$ &Attraction to nearby fish (distance)&  0.05& change\\
+         $N$ &Number of fish&  150& keep constant\\
+         $r$ &Optimal distance of fish&  0.5& keep constant\\
+         $p$ &Attraction power&  1.5& keep constant\\
+         $q$ &Repulstion power&  2.5& keep constant\\
+         $\beta$ &Attraction to nearby fish (velocity)&  0.1& change\\
+         $\gamma$ &Repulsion to tank walls&  1& change\\
+         $\delta$ &Predator avoidance&  1& change\\
+         $\theta_1$ &Predator avoidance power&  1.5& keep constant\\
+         $R_1$ &Predator avoidance distance&  3& keep constant\\
+    \end{tabular}
+    \caption{Initial coefficients}
+    \label{tab:prey_coeff}
+\end{table}
+So probably change $\alpha,\beta,\gamma, \delta$ out of prey coefficients\par
+Other prey constants:
+\begin{itemize}
+    \item Distance from predator to be eaten = 0.2 (probably decrease this)
+    \item Max $dv$, min/max $v$
+    \item vision range
+    \item (cos) field of view
+\end{itemize}
+\section{Predator modelling}
+Schools are created using a flood fill algorithm for cells that contain fish. The center of the school is the average position of the fish.
+Each school within the vision range of the Cod (presumed 360 degrees as a lot of this is vibration based) is assigned a weight given by
+\begin{equation}
+    w(S,y) = |x_{avg}(S)-y|\left(1+\frac{k}{N(s)}\right)
+\end{equation}
+\begin{itemize}
+    \item S = school
+    \item $x_{avg}(x)$: average position of fish in the school x
+    \item $k$: constant, $-1\le k\le 1$, negative favours larger schools, positive favours smaller
+    \item $N(x)$: number of fish in school x
+School with smallest $w$ is chosen to attack - if there is none then cod defaults to "milling"
+\end{itemize}
+\subsection{Mill}
+sets velocity to .5L
+gains 1 energy per minute up to a maximum of 1
+bounces of any walls, and ensures that it never goes through any tank walls
+avoids tank (identically to herring)
+\subsection{Attack school}
+Three strategies for how to attack\par
+Strategy I: Attack the centre of the nearest school
+\begin{equation}
+    F(S,y,v) = -\gamma_1[y-x_{avg}(S)+\gamma_2(v-v_{avg}(S))]\frac{R_2^{\theta_2}}{|y-x_{avg}(S)|^{\theta_2}}
+\end{equation}
+\begin{itemize}
+    \item $v$: Velocity of predator
+    \item $\gamma_1,\gamma_2,R_2,\theta_2$: Predator behaviour constants - $\gamma_1+\gamma_2$ can be changed
+    \item     $v_{avg}(x)$: average velocity of fish in the school x
+
+\end{itemize}
+Strategy II: Weight the force towards nearer fish within the school
+\begin{equation}
+    F(S,y,v) = -\gamma_1 \sum_{\substack{i=1}}^{N(S)} [y-x_i+\gamma_2(v-v_i)]\frac{R_2^{\theta_2}}{|y-x_i|^{\theta_2}}
+\end{equation}
+Strategy III: Attack nearest fish in school
+Find the nearest fish ($x_n,v_n$) using absolute distance
+\begin{equation}
+    F(y,v,v_n,x_n) = -\gamma_1[y-x_n+\gamma_2(v-v_n)]\frac{R_2^{\theta_2}}{|y-x_n|^{\theta_2}}
+\end{equation}
+Decided on strategy II
+Strategy I discounted as the cod was unable to eat more than a couple of fish during the attack, and then got stuck in the centre of the school without actually eating any as the herring just surrounded it.
+Strategy III confused the cod as the fish it was attempting to attack continuously changed (partially due to the lack of memory limitation discussed above) and therefore attack was quite inneffective
+This aligns with general behaviour of cod versus fish who normally employ strategy I, as these are often very fast-moving burst fish who intend to disrupt the school and then eat a large number of herring in a very short time. Cod are too slow-moving to do this, so instead act as opportunistic hunters, more like strategy II.
+
+\begin{table}
+    \centering
+    \begin{tabular}{cccc}
+         $k$&  School size weighting&  0.5& change\\
+         $\gamma_1$&  Attack constant&  0.2& Change\\
+         $\gamma_2$&  Align velocity with school&  0.1& Change\\
+         $R_2$&  Other constants&  3& Don't change\\
+         $\theta_2$&  Other constants&  2& Don't change\\
+ $L$& Body length& 0.38&Don't change\\
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:a}
+\end{table}
+\subsection{Use up energy}
+Max velocity must be between 0.5 and 5.8 body lengths, and is given by this formula when attacking the school:
+\begin{equation}
+    v_{max} = 0.8+\frac{e}{y-x_{avg}(S)}
+\end{equation}
+the 0.8 is base swimming speed
+if the calculated $v>v_{max}$ then it is scaled to $v_{max}$. After clamping position to within the bounds of the tank:
+\begin{equation}
+    \frac{de}{dt} = \begin{cases}
+    \frac{1}{60}&|v|<0.5L\\
+    \frac{1}{120}&0.5L\le|v|\le1.2L\\
+    \frac{1-53^{\frac{|v|}{2L}-\frac{1}{2}}}{3120}&|v|>1.2L
+    \end{cases}
+\end{equation}
+E is then clamped to be $0\le e \le1$.
+This formula is derived using the following facts (using https://www.sciencedirect.com/science/article/abs/pii/016578369190050P, \\
+https://scholars.unh.edu/cgi/viewcontent.cgi?article=1428\&context=thesis):
+\begin{enumerate}
+    \item Energy cost is exponentially proportional to velocity
+    \item Cod can swim at 3BL/s for maximum 1 minute
+    \item Swimming at 1BL/s uses minimal extra energy
+    \item Maximum speed is 5.8BL/s
+\end{enumerate}
+These facts mean that a graph of $\frac{de}{dt}$ against $v$ can be drawn with the formula $\frac{de}{dt}=ae^{kv}+c$, going through the points $\left(L, 0\right),\left(3L,\frac{1}{60}\right)$and$\left(5L,\frac{9}{10}\right)$. (the last point is an approximation of maximum 6 seconds for the average fish at nearly top speed). The above formula is from this.
+
+\section{Regression}
+\subsection{Parameters}
+Herring - $\alpha,\beta,\gamma,\delta$
+Cod - $\gamma_1,\gamma_2,k$
+5 minutes of simulation, no obstacles, 300 fish with 3 predators
+using differential evolution with 10 generations and 10 population, but done 10 times (interleaved predator/prey) with best results taken as defaults for the next one - so 2000 generations total, has to be quite little due to simulation being slow
+also running 16 random seeds for each simulation (starting points, stochastic noise) to prevent overfitting to a single seed - threaded so each seed runs on a thread (note not core, as using an AMD Ryzen 7 3700X which has 16 threads but 8 cores)
+
+after 1 prey run and no predator:
+\begin{enumerate}
+    \item $\gamma$ varies wildly and makes no difference, which may be due to the hard avoiding doing the same thing
+    \item $\beta$ is negative (velocity alignment decreases survival) but $\alpha$ is positive and relatively high - suggests schooling is useful, although moving as a school is not, may also be to confuse an (untrained) predator 
+    \item $\delta$ is very high, as expected
+\end{enumerate}
+
+\subsection{Initial run with above constraints:}
+
+\begin{table}
+    \centering
+    \begin{tabular}{ccc}
+         Predator 1&  $\gamma_1=2, \gamma_2=0.55, k=0.98$& Low std across top 10 for $\gamma_1$ and $k$, significant preference to smaller schools\\
+         Prey 1&  $\alpha=0,\beta=-3, \gamma=0.83,\delta=0.58$& $\alpha$ clamped to zero, no positive correlation with schooling (unsure if negative corellation), $\beta$ strongly negative (unexpected), $\gamma$ and $\delta$ high as expected\\
+         ....&  & \\
+         Predator 5&  $\gamma_1=0.22, \gamma_2=1.2, k=0.045$& Generally standard deviation increased significantly, $k$ now close to zero, $\gamma_1$ and $\gamma_2$ roughly swapped\\
+         Prey 5&  $\alpha=0.04,\beta=-2.43, \gamma=0.83,\delta=0.58$& $\alpha$ is zero with little s.d., $\beta$ is negative, $\gamma$ is very negative but with large s.d., $\delta$ high as expected with some s.d\\
+    \end{tabular}
+    \caption{Caption}
+    \label{tab:placeholder}
+\end{table}
+s.d. is calculated from top 10 runs
+Alive goes $4488\Longrightarrow4744\Longrightarrow4683\Longrightarrow4712\Longrightarrow4668\Longrightarrow4729\Longrightarrow4668\Longrightarrow4706\Longrightarrow4680\Longrightarrow$4714
+clearly improving each time and the level of optimisation decreases - likely after a few more iterations would remain roughly constant, and as it's aggregating 16 simulations the last improvement only improved by about 2.1 fish each simulation
+Issue is that fish appear to be learning the schooling is bad (schooling direction negatively correlated with survival, attraction/repulsion not positively correlated), which is evidently not the case in nature. This is likely due to a few of my other constraints, so the simulation was rerun with following changes:
+\begin{itemize}
+    \item Increase tank size to 30m cubed (although don't improve vision) as this should provide more space for schooling behaviour to work
+    \item Penalise hitting the walls by halving the velocity, should cause $\gamma$ to stay more consistent
+    \item Run 30 rather than 10 generations - slower, but given high s.d. in results an optimal solution clearly isn't being reached in the time
+    \item Clamp schooling to $\le0$: while means that it will not show negative correlation it will provide more insights on positive correlation, which I want for my initial trial
+    \item  Calculate the s.d. between each seed and penalise based on this - may be outliers based on seed generation
+    \item Up predator count to 5 as currently fish are significantly outperforming predators (only 3-20 are being eaten within the time)
+    \item Up simulation time to 7mins for above reasons and also to reduce seed randomness and allow the situation to settle
+\end{itemize}
